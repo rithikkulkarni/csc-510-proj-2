@@ -9,7 +9,7 @@ export default function Home() {
       {/* top-left "home" pill */}
       <div className="absolute left-4 top-4">
         <button className="rounded-md border px-3 py-1 text-sm shadow-sm hover:bg-gray-50 cursor-pointer transform transition duration-150 hover:scale-105 hover:bg-gray-300/90">
-          home
+          Home
         </button>
       </div>
 
