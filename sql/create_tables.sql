@@ -46,13 +46,3 @@ CREATE TABLE IF NOT EXISTS votes (
     restaurant_id BIGINT REFERENCES restaurants(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
-
--- ------------------------
--- 5. Sample Restaurants
--- ------------------------
-INSERT INTO restaurants (name, cuisine, dietary_tags, latitude, longitude, price_level) VALUES
-('Pizza Place', 'Italian', 'vegetarian', 40.7128, -74.0060, 2),
-('Sushi House', 'Japanese', 'gluten-free', 40.73061, -73.935242, 3),
-('Burger Joint', 'American', 'none', 40.715, -74.015, 1),
-('Taco Spot', 'Mexican', 'spicy', 40.720, -73.995, 2),
-('Salad Bar', 'Healthy', 'vegan', 40.725, -74.010, 1);
