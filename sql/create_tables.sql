@@ -1,7 +1,6 @@
 -- ================================================
 -- Supabase Database Setup
 -- Tables: sessions, users, restaurants, votes
--- Sample data included for restaurants
 -- ================================================
 
 -- ------------------------
