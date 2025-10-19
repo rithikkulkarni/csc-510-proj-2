@@ -15,3 +15,5 @@ git clone https://github.com/rithikkulkarni/csc-510-proj-2.git
 cd starter
 npm install
 npm run dev
+```
+[![Coverage Status](https://coveralls.io/repos/github/rithikkulkarni/csc-510-proj-2/badge.svg?branch=main)](https://coveralls.io/github/rithikkulkarni/csc-510-proj-2?branch=main)
