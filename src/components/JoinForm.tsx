@@ -1,8 +1,12 @@
 "use client";
 import React, { useState } from "react";
-import { supabase } from "../lib/supabaseClient"; // ensure your Supabase client exists
+import { supabase as realSupabase } from "../lib/supabaseClient";
 
-export default function JoinForm() {
+type JoinFormProps = {
+  supabase?: typeof realSupabase; // optional prop for tests
+};
+
+export default function JoinForm({ supabase = realSupabase }: JoinFormProps) {
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
 
@@ -20,7 +24,7 @@ export default function JoinForm() {
         .from("sessions")
         .select("id, code")
         .eq("code", code)
-        .maybeSingle(); // <-- use maybeSingle to avoid errors if no rows
+        .maybeSingle(); // safer than single() to avoid errors with 0 rows
 
       if (error) {
         console.error(error);
@@ -49,7 +53,6 @@ export default function JoinForm() {
         inputMode="text"
         value={code}
         onChange={(e) => {
-          // Remove non-letter chars and force uppercase
           const filtered = e.target.value.replace(/[^A-Za-z]/g, "").toUpperCase();
           setCode(filtered);
         }}

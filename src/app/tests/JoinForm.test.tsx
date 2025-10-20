@@ -1,8 +1,26 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { vi } from "vitest";
 import JoinForm from "../../components/JoinForm";
 
+// Define a type for a minimal supabase client used in JoinForm
+type SupabaseMock = {
+    from: (table: string) => {
+        select: (columns: string) => {
+            eq: (column: string, value: string) => {
+                maybeSingle: () => Promise<{ data: any; error: any }>;
+            };
+        };
+    };
+};
+
 describe("JoinForm", () => {
+    let singleMock: () => Promise<{ data: any; error: any }>;
+
+    beforeEach(() => {
+        singleMock = vi.fn();
+    });
+
     it("renders the input and button", () => {
         render(<JoinForm />);
         expect(screen.getByPlaceholderText(/Enter Code/i)).toBeInTheDocument();
@@ -17,8 +35,21 @@ describe("JoinForm", () => {
         expect(input.value).toBe("ABC");
     });
 
-    it("displays success message when code exists in Supabase", async () => {
-        render(<JoinForm />);
+    it("displays success message when code exists", async () => {
+        singleMock = vi.fn().mockResolvedValue({ data: { id: 1, code: "ABCD" }, error: null });
+
+        const mockSupabase: SupabaseMock = {
+            from: () => ({
+                select: () => ({
+                    eq: () => ({
+                        maybeSingle: singleMock,
+                    }),
+                }),
+            }),
+        } as any;
+
+        render(<JoinForm supabase={mockSupabase as any} />);
+
         const input = screen.getByPlaceholderText(/Enter Code/i);
         const button = screen.getByRole("button", { name: /Join/i });
 
@@ -26,23 +57,32 @@ describe("JoinForm", () => {
         fireEvent.click(button);
 
         const message = await screen.findByTestId("join-message");
-        await waitFor(() => {
-            expect(message.textContent).toMatch(/Success! Joined session/);
-        });
+        expect(message).toHaveTextContent("Success! Joined session 1.");
     });
 
     it("displays invalid code message when code does not exist", async () => {
-        render(<JoinForm />);
+        singleMock = vi.fn().mockResolvedValue({ data: null, error: null });
+
+        const mockSupabase: SupabaseMock = {
+            from: () => ({
+                select: () => ({
+                    eq: () => ({
+                        maybeSingle: singleMock,
+                    }),
+                }),
+            }),
+        } as any;
+
+        render(<JoinForm supabase={mockSupabase as any} />);
+
         const input = screen.getByPlaceholderText(/Enter Code/i);
         const button = screen.getByRole("button", { name: /Join/i });
 
-        fireEvent.change(input, { target: { value: "XXXX" } });
+        fireEvent.change(input, { target: { value: "XYZ" } });
         fireEvent.click(button);
 
         const message = await screen.findByTestId("join-message");
-        await waitFor(() => {
-            expect(message.textContent).toBe("Invalid code.");
-        });
+        expect(message).toHaveTextContent("Invalid code.");
     });
 
     it("prevents default form submission", () => {
@@ -52,7 +92,7 @@ describe("JoinForm", () => {
         const form = screen.getByTestId("join-form");
         const input = screen.getByPlaceholderText(/Enter Code/i);
 
-        fireEvent.change(input, { target: { value: "hello" } });
+        fireEvent.change(input, { target: { value: "HELLO" } });
         fireEvent.submit(form);
 
         expect(preventDefaultSpy).toHaveBeenCalled();
