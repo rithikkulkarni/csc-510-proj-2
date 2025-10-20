@@ -1,6 +1,6 @@
 import { vi, describe, test, expect } from 'vitest';
 import { GET } from './route';
-import { createMocks } from 'node-mocks-http';
+//import { createMocks } from 'node-mocks-http';
 
 // Mock Supabase client
 vi.mock('@supabase/supabase-js', () => {
@@ -8,13 +8,21 @@ vi.mock('@supabase/supabase-js', () => {
     createClient: () => ({
       from: () => ({
         select: () => ({
-          eq: (code: string) => ({
+          eq: (_field: string, code: string) => ({
             single: async () => {
               if (code === 'VALID') {
-                return { data: { code: 'VALID', status: 'open', created_at: new Date(), length_hours: 1 }, error: null };
+                return {
+                  data: { code: 'VALID', status: 'open', created_at: new Date(), length_hours: 1 },
+                  error: null
+                };
               } else if (code === 'EXPD') {
                 return {
-                  data: { code: 'EXPD', status: 'open', created_at: new Date(Date.now() - 2 * 3600 * 1000), length_hours: 1 },
+                  data: {
+                    code: 'EXPD',
+                    status: 'open',
+                    created_at: new Date(Date.now() - 2 * 3600 * 1000), // 2 hours ago
+                    length_hours: 1
+                  },
                   error: null
                 };
               } else {

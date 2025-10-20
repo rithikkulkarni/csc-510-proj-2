@@ -43,19 +43,19 @@ export default defineConfig({
 
 
     // Optional coverage 
-    // coverage: {
-    //   provider: "v8",
-    //   reporter: ["text", "lcov", "html"],
-    //   all: true,
-    //   exclude: [
-    //     "node_modules/",
-    //     ".next/",
-    //     "out/",
-    //     "coverage/",
-    //     "**/*.d.ts",
-    //     "**/vitest.setup.ts",
-    //     "**/vitest.config.ts",
-    //   ],
-    // },
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "lcov", "html"],
+      all: true,
+      exclude: [
+        "node_modules/",
+        ".next/",
+        "out/",
+        "coverage/",
+        "**/*.d.ts",
+        "**/vitest.setup.ts",
+        "**/vitest.config.ts",
+      ],
+    },
   },
 });

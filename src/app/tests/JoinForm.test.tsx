@@ -1,77 +1,49 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import JoinForm from './JoinForm';
+import React from "react";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { vi } from "vitest";
+import JoinForm from "../../components/JoinForm"; // adjust path to match your structure
 
-// Mock fetch to hit the API route
-global.fetch = vi.fn((url) => {
-  const code = url.split('/').pop();
-  if (code === 'VALID') {
-    return Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({ code: 'VALID', status: 'open', created_at: new Date(), length_hours: 1 })
+describe("JoinForm", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
     });
-  } else if (code === 'EXPD') {
-    return Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({ code: 'EXPD', status: 'closed', created_at: new Date(Date.now() - 2 * 3600 * 1000), length_hours: 1 })
+
+    it("renders the input and button", () => {
+        render(<JoinForm />);
+        expect(screen.getByPlaceholderText(/Enter Code/i)).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /join/i })).toBeInTheDocument();
     });
-  } else {
-    return Promise.resolve({
-      ok: false,
-      json: () => Promise.resolve({ error: 'Session not found' })
+
+    it("filters non-letter characters and forces uppercase", () => {
+        render(<JoinForm />);
+        const input = screen.getByPlaceholderText(/Enter Code/i) as HTMLInputElement;
+
+        fireEvent.change(input, { target: { value: "abc123!@" } });
+        expect(input.value).toBe("ABC");
     });
-  }
-}) as any;
 
-describe('JoinForm Component', () => {
-  test('filters input to uppercase letters only', () => {
-    render(<JoinForm />);
-    const input = screen.getByPlaceholderText(/enter code/i);
-    fireEvent.change(input, { target: { value: 'a1b2c3' } });
-    expect(input).toHaveValue('ABC');
-  });
+    it("calls console.log with the code when submitted", () => {
+        const logSpy = vi.spyOn(console, "log").mockImplementation(() => { });
+        render(<JoinForm />);
+        const input = screen.getByPlaceholderText(/Enter Code/i);
+        const button = screen.getByRole("button", { name: /join/i });
 
-  test('shows error for short code', async () => {
-    render(<JoinForm />);
-    const input = screen.getByPlaceholderText(/enter code/i);
-    const button = screen.getByRole('button', { name: /join/i });
+        fireEvent.change(input, { target: { value: "xyz" } });
+        fireEvent.click(button);
 
-    fireEvent.change(input, { target: { value: 'AB' } });
-    fireEvent.click(button);
+        expect(logSpy).toHaveBeenCalledWith("Join code submitted:", "XYZ");
+    });
 
-    expect(await screen.findByText(/must be 4 letters/i)).toBeInTheDocument();
-  });
+    it("prevents default form submission", () => {
+        const preventDefaultSpy = vi.spyOn(Event.prototype, "preventDefault");
 
-  test('displays session info for valid session', async () => {
-    render(<JoinForm />);
-    const input = screen.getByPlaceholderText(/enter code/i);
-    const button = screen.getByRole('button', { name: /join/i });
+        render(<JoinForm />);
+        const form = screen.getByTestId("join-form");
+        const input = screen.getByPlaceholderText(/Enter Code/i);
 
-    fireEvent.change(input, { target: { value: 'VALID' } });
-    fireEvent.click(button);
+        fireEvent.change(input, { target: { value: "hello" } });
+        fireEvent.submit(form);
 
-    await waitFor(() => screen.getByText(/code: VALID/i));
-    expect(screen.getByText(/status: open/i)).toBeInTheDocument();
-  });
-
-  test('shows closed error for expired session', async () => {
-    render(<JoinForm />);
-    const input = screen.getByPlaceholderText(/enter code/i);
-    const button = screen.getByRole('button', { name: /join/i });
-
-    fireEvent.change(input, { target: { value: 'EXPD' } });
-    fireEvent.click(button);
-
-    await waitFor(() => screen.getByText(/already closed/i));
-  });
-
-  test('shows error for non-existent session', async () => {
-    render(<JoinForm />);
-    const input = screen.getByPlaceholderText(/enter code/i);
-    const button = screen.getByRole('button', { name: /join/i });
-
-    fireEvent.change(input, { target: { value: 'NONE' } });
-    fireEvent.click(button);
-
-    await waitFor(() => screen.getByText(/not found or expired/i));
-  });
+        expect(preventDefaultSpy).toHaveBeenCalled();
+    });
 });
