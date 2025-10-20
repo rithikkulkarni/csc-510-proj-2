@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { supabase } from "../lib/supabaseClient"; // make sure your supabase client exists
+import { supabase } from "../lib/supabaseClient"; // ensure your Supabase client exists
 
 export default function JoinForm() {
   const [code, setCode] = useState("");
@@ -20,7 +20,7 @@ export default function JoinForm() {
         .from("sessions")
         .select("id, code")
         .eq("code", code)
-        .single();
+        .maybeSingle(); // <-- use maybeSingle to avoid errors if no rows
 
       if (error) {
         console.error(error);
