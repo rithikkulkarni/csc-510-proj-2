@@ -1,5 +1,3 @@
-export const runtime = 'edge'; // or 'nodejs' if you prefer Node runtime
-
 import { NextResponse } from 'next/server';
 import { generateCode } from '@/lib/sessionCode';
 import { redis } from '@/lib/redis';
