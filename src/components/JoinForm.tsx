@@ -1,17 +1,46 @@
 "use client";
 import React, { useState } from "react";
+import { supabase } from "../lib/supabaseClient"; // make sure your supabase client exists
 
 export default function JoinForm() {
   const [code, setCode] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!code) {
+      setMessage("Please enter a code.");
+      return;
+    }
+
+    try {
+      // Query Supabase 'sessions' table for the code
+      const { data, error } = await supabase
+        .from("sessions")
+        .select("id, code")
+        .eq("code", code)
+        .single();
+
+      if (error) {
+        console.error(error);
+        setMessage("Error checking code.");
+      } else if (!data) {
+        setMessage("Invalid code.");
+      } else {
+        setMessage(`Success! Joined session ${data.id}.`);
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage("Unexpected error occurred.");
+    }
+  };
 
   return (
     <form
       data-testid="join-form"
       className="flex w-full max-w-lg items-center gap-3"
-      onSubmit={(e) => {
-        e.preventDefault();
-        console.log("Join code submitted:", code);
-      }}
+      onSubmit={handleSubmit}
     >
       <input
         name="code"
@@ -42,6 +71,12 @@ export default function JoinForm() {
           <path d="M8 5v14l11-7-11-7z" />
         </svg>
       </button>
+
+      {message && (
+        <p data-testid="join-message" className="text-sm text-red-500">
+          {message}
+        </p>
+      )}
     </form>
   );
 }
