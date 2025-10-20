@@ -7,12 +7,12 @@ import JoinForm from "../components/JoinForm";
 export default function Home() {
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-white text-gray-900">
-      {/* top-left "home" pill */}
+      {/* top-left "home" pill
       <div className="absolute left-4 top-4">
         <button className="rounded-md border px-3 py-1 text-sm shadow-sm hover:bg-gray-50 cursor-pointer transform transition duration-150 hover:scale-105 hover:bg-gray-300/90">
-          home
+          Home
         </button>
-      </div>
+      </div> */}
 
       {/* center the content vertically & horizontally */}
       <main className="mx-auto flex min-h-screen w-full max-w-5xl items-center justify-center px-6">

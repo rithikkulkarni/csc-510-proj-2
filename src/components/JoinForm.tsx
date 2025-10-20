@@ -19,10 +19,11 @@ export default function JoinForm() {
         type="text"
         placeholder="Enter Code"
         inputMode="text"
+        maxLength={4}
         value={code}
         onChange={(e) => {
-          // Remove non-letter chars and force uppercase
-          const filtered = e.target.value.replace(/[^A-Za-z]/g, "").toUpperCase();
+          // Remove non-letter chars, force uppercase, and limit to 4 chars
+          const filtered = e.target.value.replace(/[^A-Za-z]/g, "").toUpperCase().slice(0, 4);
           setCode(filtered);
         }}
         className="h-12 w-full rounded-lg border px-5 text-base shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 md:h-12 md:text-lg transform transition duration-150 hover:scale-103 hover:bg-gray-300/90"
