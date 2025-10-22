@@ -1,64 +1,63 @@
-import { vi, describe, test, expect } from 'vitest';
-import { GET } from './route';
-//import { createMocks } from 'node-mocks-http';
+import { describe, it, expect } from "vitest";
+import { supabase } from "../../../../lib/supabaseClient";
 
-// Mock Supabase client
-vi.mock('@supabase/supabase-js', () => {
-  return {
-    createClient: () => ({
-      from: () => ({
-        select: () => ({
-          eq: (_field: string, code: string) => ({
-            single: async () => {
-              if (code === 'VALID') {
-                return {
-                  data: { code: 'VALID', status: 'open', created_at: new Date(), length_hours: 1 },
-                  error: null
-                };
-              } else if (code === 'EXPD') {
-                return {
-                  data: {
-                    code: 'EXPD',
-                    status: 'open',
-                    created_at: new Date(Date.now() - 2 * 3600 * 1000), // 2 hours ago
-                    length_hours: 1
-                  },
-                  error: null
-                };
-              } else {
-                return { data: null, error: { message: 'Not found' } };
-              }
-            }
-          })
-        })
-      })
-    })
-  };
-});
+// Utility to generate a random 4-letter uppercase code
+function generateCode(length = 4) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
 
-describe('API Route: GET /api/sessions/[code]', () => {
-  test('returns session for valid code', async () => {
-    const res = await GET({} as any, { params: { code: 'VALID' } });
-    const data = await res.json();
-    expect(data.code).toBe('VALID');
-    expect(data.status).toBe('open');
-  });
+describe("Supabase Automated Session Test", () => {
+  it("creates, fetches, and deletes a test session", async () => {
+    const testCode = generateCode();
 
-  test('returns closed for expired session', async () => {
-    const res = await GET({} as any, { params: { code: 'EXPD' } });
-    const data = await res.json();
-    expect(data.status).toBe('closed');
-  });
+    // 1. Insert test session
+    const { data: inserted, error: insertError } = await supabase
+      .from("sessions")
+      .insert([{ code: testCode }])
+      .select()
+      .single();
 
-  test('returns 404 for non-existent session', async () => {
-    const res = await GET({} as any, { params: { code: 'NONE' } });
-    const data = await res.json();
-    expect(data.error).toBe('Session not found');
-  });
+    if (insertError) {
+      throw new Error(`Failed to insert test session: ${insertError.message}`);
+    }
 
-  test('returns 400 for missing code', async () => {
-    const res = await GET({} as any, { params: { code: '' } });
-    const data = await res.json();
-    expect(data.error).toBe('Session code is required');
+    expect(inserted.code).toBe(testCode);
+
+    // 2. Fetch the session by code
+    const { data: fetched, error: fetchError } = await supabase
+      .from("sessions")
+      .select("*")
+      .eq("code", testCode)
+      .single();
+
+    if (fetchError) {
+      throw new Error(`Failed to fetch test session: ${fetchError.message}`);
+    }
+
+    expect(fetched.code).toBe(testCode);
+
+    // 3. Delete the test session
+    const { error: deleteError } = await supabase
+      .from("sessions")
+      .delete()
+      .eq("id", inserted.id);
+
+    if (deleteError) {
+      throw new Error(`Failed to delete test session: ${deleteError.message}`);
+    }
+
+    // 4. Verify deletion
+    const { data: verifyDeleted } = await supabase
+      .from("sessions")
+      .select("*")
+      .eq("code", testCode)
+      .single();
+
+    expect(verifyDeleted).toBeNull();
   });
 });

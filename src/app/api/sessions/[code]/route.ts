@@ -1,37 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabaseClient";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_KEY!
-);
+// GET: Fetch a session by its code
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ code: string }> } // Next.js expects a Promise
+) {
+  try {
+    const { code } = await context.params;
 
-export async function GET(req: NextRequest, { params }: { params: { code: string } }) {
-  const { code } = params;
+    if (!code) {
+      return NextResponse.json({ error: "Missing session code" }, { status: 400 });
+    }
 
-  if (!code) {
-    return NextResponse.json({ error: "Session code is required" }, { status: 400 });
+    const { data: session, error } = await supabase
+      .from("sessions")
+      .select("*")
+      .eq("code", code)
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ session });
+  } catch (err) {
+    return NextResponse.json({ error: "Unexpected server error" }, { status: 500 });
   }
-
-  const { data, error } = await supabase
-    .from("sessions")
-    .select("*")
-    .eq("code", code.toUpperCase())
-    .single();
-
-  if (error || !data) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
-  }
-
-  // Calculate expiration
-  const expiration = new Date(data.created_at);
-  expiration.setHours(expiration.getHours() + data.length_hours);
-
-  // Auto-close if expired
-  if (new Date() >= expiration) {
-    data.status = "closed";
-  }
-
-  return NextResponse.json(data);
 }
 
+// POST: Optionally, create a new session
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ code: string }> }
+) {
+  try {
+    const body = await request.json();
+    const code = body?.code;
+
+    if (!code) {
+      return NextResponse.json({ error: "Missing session code" }, { status: 400 });
+    }
+
+    const { data: newSession, error } = await supabase
+      .from("sessions")
+      .insert({ code })
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ session: newSession }, { status: 201 });
+  } catch (err) {
+    return NextResponse.json({ error: "Unexpected server error" }, { status: 500 });
+  }
+}
