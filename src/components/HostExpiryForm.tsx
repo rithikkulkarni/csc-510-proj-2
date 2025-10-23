@@ -22,23 +22,22 @@ export default function HostExpiryForm({ price, lat, lng, radiusMiles }: Props) 
     setLoading(true)
     setError(null)
     try {
-      const expiresAt = new Date(Date.now() + hours * 3600_000).toISOString()
       const res = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          expiresAt,
-          payload: {
-            price,
-            location: { lat, lng },
-            radiusMiles,
-          },
+          price,
+          location: { lat, lng },
+          radiusMiles,
+          hours,
         }),
       })
+
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Failed to create session')
 
-      router.replace(`/host/success?code=${encodeURIComponent(data.code)}&expiresAt=${encodeURIComponent(data.expiresAt)}`)
+      // Server returns the session code and id. Redirect to success page with the code.
+      router.replace(`/host/success?code=${encodeURIComponent(data.code)}`)
     } catch (e: any) {
       setError(e.message || 'Something went wrong')
     } finally {
