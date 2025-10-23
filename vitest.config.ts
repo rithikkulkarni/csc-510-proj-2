@@ -41,7 +41,7 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"], // Optional setup file
     environment: "jsdom",              // Use jsdom for React tests; works with fetch for Supabase
 
-
+    
     // Optional coverage 
     coverage: {
       provider: "v8",
@@ -58,4 +58,10 @@ export default defineConfig({
       ],
     },
   },
+
+  resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      }
+    },
 });
