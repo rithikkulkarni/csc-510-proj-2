@@ -1,4 +1,3 @@
-// components/HostExpiryForm.tsx
 'use client'
 
 import { useRouter } from 'next/navigation'
@@ -20,7 +19,7 @@ export default function HostExpiryForm({ price, lat, lng, radiusMiles }: Props) 
 
   const disabled = !price || !lat || !lng || hours <= 0
 
-  async function handleCreate() {
+  const handleCreate = async () => {
     if (disabled) return
 
     setLoading(true)
@@ -52,7 +51,7 @@ export default function HostExpiryForm({ price, lat, lng, radiusMiles }: Props) 
         )}`
       )
     } catch (e: any) {
-      setError(e.message || 'Something went wrong')
+      setError(e?.message ?? 'Something went wrong')
     } finally {
       setLoading(false)
     }
@@ -62,7 +61,8 @@ export default function HostExpiryForm({ price, lat, lng, radiusMiles }: Props) 
     <main className="flex flex-col items-center gap-6">
       <BackButton />
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 w-full max-w-md">
+        {/* Hours input */}
         <div className="flex items-center justify-center gap-3">
           <label className="text-black font-medium">Valid for (hours)</label>
           <input
@@ -79,12 +79,16 @@ export default function HostExpiryForm({ price, lat, lng, radiusMiles }: Props) 
           />
         </div>
 
+        {/* Error message */}
         {error && <p className="text-red-600 text-center">{error}</p>}
 
+        {/* Create session button */}
         <button
           disabled={disabled || loading}
           onClick={handleCreate}
-          className={`w-full rounded-2xl py-3 font-bold text-white ${disabled || loading ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-800 hover:bg-green-900'
+          className={`w-full rounded-2xl py-3 font-bold text-white ${disabled || loading
+              ? 'bg-gray-300 cursor-not-allowed'
+              : 'bg-green-800 hover:bg-green-900'
             }`}
         >
           {loading ? 'Creating…' : 'Create Session'}

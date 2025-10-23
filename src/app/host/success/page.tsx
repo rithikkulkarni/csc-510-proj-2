@@ -1,25 +1,29 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 export default function HostSuccessPage() {
   const searchParams = useSearchParams()
 
-  const code = searchParams.get('code') ?? 'N/A'
-  const expiresAtRaw = searchParams.get('expiresAt')
-  const expiresAt = expiresAtRaw ? new Date(expiresAtRaw) : null
+  // safely unwrap searchParams using useMemo
+  const code = useMemo(() => searchParams?.get('code') ?? 'N/A', [searchParams])
+  const expiresAt = useMemo(() => {
+    const expiresAtRaw = searchParams?.get('expiresAt')
+    return expiresAtRaw ? new Date(expiresAtRaw) : null
+  }, [searchParams])
 
   const [timeLeft, setTimeLeft] = useState<string>('')
-  const [timeColor, setTimeColor] = useState('text-green-600')
+  const [timeColor, setTimeColor] = useState('text-green-600 font-bold')
 
   useEffect(() => {
     if (!expiresAt) return
 
     function updateCountdown() {
       const now = new Date()
-      const diff = expiresAt.getTime() - now.getTime()
+      if (!expiresAt) return
 
+      const diff = expiresAt.getTime() - now.getTime()
       if (diff <= 0) {
         setTimeLeft('Expired')
         setTimeColor('text-red-600 font-bold')
@@ -32,14 +36,9 @@ export default function HostSuccessPage() {
 
       setTimeLeft(`${hours}h ${minutes}m ${seconds}s`)
 
-      // Update color based on remaining time
-      if (hours >= 1) {
-        setTimeColor('text-green-600 font-bold')
-      } else if (minutes >= 5) {
-        setTimeColor('text-yellow-500 font-bold')
-      } else {
-        setTimeColor('text-red-600 font-bold')
-      }
+      if (hours >= 1) setTimeColor('text-green-600 font-bold')
+      else if (minutes >= 5) setTimeColor('text-yellow-500 font-bold')
+      else setTimeColor('text-red-600 font-bold')
     }
 
     updateCountdown()
@@ -51,7 +50,7 @@ export default function HostSuccessPage() {
 
   return (
     <main className="min-h-screen bg-green-100 flex flex-col items-center px-4 py-8">
-      {/* Title */}
+      {/* Page Title */}
       <h1 className="text-4xl md:text-5xl font-extrabold text-black mb-2 text-center">
         Session Created!
       </h1>

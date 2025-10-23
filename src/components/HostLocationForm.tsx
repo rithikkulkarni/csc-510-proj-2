@@ -1,4 +1,3 @@
-// components/HostLocationForm.tsx
 'use client'
 
 import dynamic from 'next/dynamic'
@@ -20,9 +19,8 @@ export default function HostLocationForm({ price }: Props) {
   const disabled = useMemo(() => !price || !latLng || radiusMiles <= 0, [price, latLng, radiusMiles])
 
   return (
-    <main className="flex flex-col items-center gap-6">
+    <main className="flex flex-col items-center gap-6 w-full max-w-4x1">
       <BackButton />
-
 
       {/* Map */}
       <div className="w-full h-80 rounded-lg border overflow-hidden mb-4">
@@ -37,7 +35,10 @@ export default function HostLocationForm({ price }: Props) {
           min={1}
           className="w-24 rounded-md border border-gray-300 px-3 py-2 bg-white text-black"
           value={radiusMiles}
-          onChange={(e) => setRadiusMiles(parseInt(e.target.value || '0', 10))}
+          onChange={(e) => {
+            const value = parseInt(e.target.value || '0', 10)
+            setRadiusMiles(Math.max(1, value))
+          }}
         />
       </div>
 
@@ -49,7 +50,7 @@ export default function HostLocationForm({ price }: Props) {
         onClick={() => {
           if (!latLng) return
           router.push(
-            `/host/expiry?price=${price}&lat=${latLng.lat}&lng=${latLng.lng}&radiusMiles=${radiusMiles}`
+            `/host/expiry?price=${encodeURIComponent(price)}&lat=${latLng.lat}&lng=${latLng.lng}&radiusMiles=${radiusMiles}`
           )
         }}
       >

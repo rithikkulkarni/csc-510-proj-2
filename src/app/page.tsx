@@ -10,7 +10,9 @@ export default function Home() {
     <div className="relative min-h-screen bg-green-100 text-gray-900 flex flex-col items-center px-4 py-8">
       {/* Page Title */}
       <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">Food Finder</h1>
-      <p className="text-gray-700 text-lg md:text-xl mb-8">Decisions are hard. Eating together shouldn’t be.</p>
+      <p className="text-gray-700 text-lg md:text-xl mb-8 text-center">
+        Decisions are hard. Eating together shouldn’t be.
+      </p>
 
       <main className="flex flex-col gap-10 w-full max-w-5xl">
         {/* HOST card */}
