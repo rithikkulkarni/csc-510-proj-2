@@ -1,18 +1,50 @@
 "use client";
 import React, { useState } from "react";
+import { supabase as realSupabase } from "../lib/supabaseClient";
 
-export default function JoinForm() {
+type JoinFormProps = {
+  supabase?: typeof realSupabase; // optional prop for tests
+};
+
+export default function JoinForm({ supabase = realSupabase }: JoinFormProps) {
   const [code, setCode] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!code) {
+      setMessage("Please enter a code.");
+      return;
+    }
+
+    try {
+      // Query Supabase 'sessions' table for the code
+      const { data, error } = await supabase
+        .from("sessions")
+        .select("id, code")
+        .eq("code", code)
+        .maybeSingle(); // safer than single() to avoid errors with 0 rows
+
+      if (error) {
+        console.error(error);
+        setMessage("Error checking code.");
+      } else if (!data) {
+        setMessage("Invalid code.");
+      } else {
+        setMessage(`Success! Joined session ${data.id}.`);
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage("Unexpected error occurred.");
+    }
+  };
 
   return (
     <form
+      data-testid="join-form"
       className="flex w-full max-w-lg items-center gap-3"
-      onSubmit={(e) => {
-        // Prevent full page reload
-        e.preventDefault();
-        // can use 'code' to call an API
-        console.log("Join code submitted:", code);
-      }}
+      onSubmit={handleSubmit}
     >
       <input
         name="code"
@@ -34,10 +66,22 @@ export default function JoinForm() {
         aria-label="Join"
         className="grid h-12 w-16 place-items-center rounded-lg border shadow-sm hover:bg-gray-50 cursor-pointer transform transition duration-150 hover:scale-110 hover:bg-gray-300/90"
       >
-        <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          width="26"
+          height="26"
+          fill="currentColor"
+          aria-hidden="true"
+        >
           <path d="M8 5v14l11-7-11-7z" />
         </svg>
       </button>
+
+      {message && (
+        <p data-testid="join-message" className="text-sm text-red-500">
+          {message}
+        </p>
+      )}
     </form>
   );
 }
