@@ -78,7 +78,7 @@ describe('HostExpiryForm', () => {
     // Successful response
     vi.mocked(global.fetch as any).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ code: 'ABC123', expiresAt: EXPECTED_EXPIRES_AT }),
+      json: async () => ({ code: 'ZZZZ', expiresAt: EXPECTED_EXPIRES_AT }),
     });
 
     render(<HostExpiryForm {...validProps} />);
@@ -104,19 +104,19 @@ describe('HostExpiryForm', () => {
     const parsed = JSON.parse(fetchInit.body);
 
     // payload correctness
-    // expect(parsed).toEqual({
-    //   expiresAt: EXPECTED_EXPIRES_AT,
-    //   payload: {
-    //     price: validProps.price,
-    //     location: { lat: validProps.lat, lng: validProps.lng },
-    //     radiusMiles: validProps.radiusMiles,
-    //   },
-    // });
+    expect(parsed).toEqual({
+      expiresAt: EXPECTED_EXPIRES_AT,
+      payload: {
+        price: validProps.price,
+        location: { lat: validProps.lat, lng: validProps.lng },
+        radiusMiles: validProps.radiusMiles,
+      },
+    });
 
     // navigation URL correctness (includes encoded params)
     const calledUrl = mockReplace.mock.calls[0][0] as string;
     expect(calledUrl).toMatch(/^\/host\/success\?/);
-    expect(calledUrl).toContain('code=ABC123');
+    expect(calledUrl).toContain('code=ZZZZ');
     expect(calledUrl).toContain(
       `expiresAt=${encodeURIComponent(EXPECTED_EXPIRES_AT)}`
     );

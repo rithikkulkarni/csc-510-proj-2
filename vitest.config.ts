@@ -47,6 +47,10 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "lcov", "html"],
       all: true,
+      include: [
+        "src/app/**/*.{test,spec}.{ts,tsx}",
+        'src/components/**/*.{test,spec}.{ts,tsx}',
+      ],
       exclude: [
         "node_modules/",
         ".next/",
