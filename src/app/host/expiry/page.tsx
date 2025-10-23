@@ -1,6 +1,7 @@
 'use client'
 
 import HostExpiryForm from '@/components/HostExpiryForm'
+import React from 'react';
 
 export default function HostExpiryPage({ searchParams }: { searchParams: Record<string, string | undefined> }) {
   const price = searchParams.price ?? ''
