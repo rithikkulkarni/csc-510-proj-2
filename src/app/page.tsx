@@ -1,4 +1,5 @@
-// app/page.tsx
+'use client'
+
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -6,66 +7,68 @@ import JoinForm from "../components/JoinForm";
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-white text-gray-900">
-      {/* top-left "home" pill
-      <div className="absolute left-4 top-4">
-        <button className="rounded-md border px-3 py-1 text-sm shadow-sm hover:bg-gray-50 cursor-pointer transform transition duration-150 hover:scale-105 hover:bg-gray-300/90">
-          Home
-        </button>
-      </div> */}
+    <div className="relative min-h-screen bg-green-100 text-gray-900 flex flex-col items-center px-4 py-8">
+      {/* Page Title */}
+      <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">Food Finder</h1>
+      <p className="text-gray-700 text-lg md:text-xl mb-8">Decisions are hard. Eating together shouldn’t be.</p>
 
-      {/* center the content vertically & horizontally */}
-      <main className="mx-auto flex min-h-screen w-full max-w-5xl items-center justify-center px-6">
-        <section className="flex w-full max-w-4xl flex-col gap-10 md:gap-12">
-          {/* HOST card */}
-          <div className="flex items-center gap-8 rounded-2xl border bg-white p-6 shadow-sm md:gap-10 md:p-8">
-            {/* big circle image */}
-            <div className="relative h-36 w-36 overflow-hidden rounded-full border md:h-40 md:w-40">
-              <Image
-                src="/host-placeholder.png"
-                alt="Host"
-                fill
-                className="object-cover"
-                priority
+      <main className="flex flex-col gap-10 w-full max-w-5xl">
+        {/* HOST card */}
+        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 rounded-2xl bg-yellow-50 p-6 md:p-8 shadow-md hover:shadow-lg transition-all duration-150">
+          <div className="relative h-36 w-36 md:h-40 md:w-40 rounded-full overflow-hidden border">
+            <Image
+              src="/host-placeholder.png"
+              alt="Host"
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+
+          <div className="flex flex-col gap-5 md:gap-6 w-full">
+            <div className="relative w-full">
+              <span className="absolute -top-6 left-0 text-xl md:text-2xl font-bold tracking-widest text-gray-700">
+                HOST
+              </span>
+              <div className="h-px w-full bg-green-300 mt-2" />
+            </div>
+
+            <Link
+              href="/host"
+              className="w-full md:w-auto text-center rounded-2xl bg-green-800 text-white font-bold text-lg md:text-xl py-4 px-6 shadow-md hover:shadow-lg hover:bg-green-900 transition transform duration-150 hover:scale-105"
+            >
+              Create Session
+            </Link>
+          </div>
+        </div>
+
+        {/* JOIN card */}
+        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 rounded-2xl bg-yellow-50 p-6 md:p-8 shadow-md hover:shadow-lg transition-all duration-150">
+          <div className="relative h-36 w-36 md:h-40 md:w-40 rounded-full overflow-hidden border">
+            <Image
+              src="/join-placeholder.png"
+              alt="Join"
+              fill
+              className="object-cover"
+            />
+          </div>
+
+          <div className="flex flex-col gap-5 md:gap-6 w-full">
+            <div className="relative w-full">
+              <span className="absolute -top-6 left-0 text-xl md:text-2xl font-bold tracking-widest text-gray-700">
+                JOIN
+              </span>
+              <div className="h-px w-full bg-green-300 mt-2" />
+            </div>
+
+            <div className="w-full">
+              <JoinForm
+                inputClassName="bg-white rounded-lg border border-gray-300 px-4 py-2 w-full text-lg"
+                buttonClassName="w-full rounded-2xl bg-green-800 text-white font-bold text-lg py-4 px-6 shadow-md hover:shadow-lg hover:bg-green-900 transition transform duration-150 hover:scale-105"
               />
             </div>
-
-            <div className="flex w-full flex-col gap-5 md:gap-6">
-              {/* label + rule */}
-              <div className="relative w-full">
-                <span className="absolute -top-4 left-0 text-xs font-semibold tracking-[0.2em] text-gray-700">
-                  HOST
-                </span>
-                <div className="h-px w-full bg-gray-300" />
-              </div>
-
-              <Link
-                href="/host"
-                className="self-start rounded-lg bg-blue-500 px-6 py-3 text-base font-medium text-white shadow hover:bg-blue-600 md:text-lg transform transition duration-150 hover:scale-105 hover:bg-blue-400/90"
-              >
-                Create Session
-              </Link>
-            </div>
           </div>
-
-          {/* JOIN card */}
-          <div className="flex items-center gap-8 rounded-2xl border bg-white p-6 shadow-sm md:gap-10 md:p-8">
-            <div className="relative h-36 w-36 overflow-hidden rounded-full border md:h-40 md:w-40">
-              <Image src="/join-placeholder.png" alt="Join" fill className="object-cover" />
-            </div>
-
-            <div className="flex w-full flex-col gap-5 md:gap-6">
-              <div className="relative w-full">
-                <span className="absolute -top-4 left-0 text-xs font-semibold tracking-[0.2em] text-gray-700">
-                  JOIN
-                </span>
-                <div className="h-px w-full bg-gray-300" />
-              </div>
-
-              <JoinForm />
-            </div>
-          </div>
-        </section>
+        </div>
       </main>
     </div>
   );
