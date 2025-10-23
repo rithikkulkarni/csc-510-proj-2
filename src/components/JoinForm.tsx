@@ -4,9 +4,15 @@ import { supabase as realSupabase } from "../lib/supabaseClient";
 
 type JoinFormProps = {
   supabase?: typeof realSupabase; // optional for tests
+  inputClassName?: string;        // optional class override for input
+  buttonClassName?: string;       // optional class override for button
 };
 
-export default function JoinForm({ supabase = realSupabase }: JoinFormProps) {
+export default function JoinForm({
+  supabase = realSupabase,
+  inputClassName,
+  buttonClassName
+}: JoinFormProps) {
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
 
@@ -54,12 +60,18 @@ export default function JoinForm({ supabase = realSupabase }: JoinFormProps) {
           const filtered = e.target.value.replace(/[^A-Za-z]/g, "").toUpperCase().slice(0, 4);
           setCode(filtered);
         }}
-        className="w-full rounded-lg border border-gray-300 bg-white px-5 py-3 text-lg shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-300 transition transform duration-150"
+        className={
+          inputClassName ??
+          "w-full rounded-lg border border-gray-300 bg-white px-5 py-3 text-lg shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-300 transition transform duration-150"
+        }
       />
 
       <button
         type="submit"
-        className="w-full rounded-2xl bg-green-800 text-white font-bold text-lg py-4 shadow-md hover:bg-green-900 transition transform duration-150 hover:scale-105"
+        className={
+          buttonClassName ??
+          "w-full rounded-2xl bg-green-800 text-white font-bold text-lg py-4 shadow-md hover:bg-green-900 transition transform duration-150 hover:scale-105"
+        }
       >
         Join Session
       </button>
