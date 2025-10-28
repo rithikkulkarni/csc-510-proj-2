@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useState, useMemo } from 'react'
 import { BackButton } from '@/components/BackButton'
+import React from 'react'
 
 const Map = dynamic(() => import('@/app/host/location/parts/LeafletMap'), { ssr: false })
 
