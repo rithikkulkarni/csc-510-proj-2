@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -14,72 +14,86 @@ type Props = {
 
 export default function HostExpiryForm({ price, lat, lng, radiusMiles }: Props) {
   const router = useRouter()
-
   const [hours, setHours] = useState(2)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleCreate() {
+  const disabled = !price || !lat || !lng || hours <= 0
+
+  const handleCreate = async () => {
+    if (disabled) return
+
     setLoading(true)
     setError(null)
+
     try {
       const res = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          price,
-          location: { lat, lng },
-          radiusMiles,
-          hours,
-        }),
+        body: JSON.stringify({ price, location: { lat, lng }, hours, radiusMiles }),
       })
 
-      const data = await res.json()
+      const text = await res.text()
+      let data: any
+      try {
+        data = JSON.parse(text)
+      } catch {
+        throw new Error('Server returned invalid JSON: ' + text)
+      }
+
       if (!res.ok) throw new Error(data?.error || 'Failed to create session')
 
-      // Server returns the session code and id. Redirect to success page with the code.
-      router.replace(`/host/success?code=${encodeURIComponent(data.code)}`)
+      const expiresAt =
+        data.expiresAt ?? new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
+
+      router.replace(
+        `/host/success?code=${encodeURIComponent(data.code)}&expiresAt=${encodeURIComponent(
+          expiresAt
+        )}`
+      )
     } catch (e: any) {
-      setError(e.message || 'Something went wrong')
+      setError(e?.message ?? 'Something went wrong')
     } finally {
       setLoading(false)
     }
   }
 
-  const disabled = !price || !lat || !lng || !radiusMiles || hours <= 0
-
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
+    <main className="flex flex-col items-center gap-6">
       <BackButton />
-      <div className="w-full max-w-md space-y-6">
-        <h1 className="text-2xl font-semibold text-center">Set Expiration</h1>
+
+      <div className="flex flex-col gap-6 w-full max-w-md">
+        {/* Hours input */}
         <div className="flex items-center justify-center gap-3">
-          <label className="text-sm">Valid for (hours)</label>
+          <label className="text-black font-medium">Valid for (hours)</label>
           <input
             type="number"
             min={1}
             max={24}
-            className="w-24 rounded-md border px-3 py-2"
+            className="w-24 rounded-md border border-gray-300 px-3 py-2 bg-white text-black"
             value={hours}
             onChange={(e) => {
-              const val = parseInt(e.target.value || '0', 10)
-              setHours(Math.min(val, 24))
+              let val = parseInt(e.target.value || '1', 10)
+              val = Math.max(1, Math.min(val, 24))
+              setHours(val)
             }}
           />
-          {hours > 24 && (
-            <p className="text-sm text-amber-600">Maximum 24 hours allowed</p>
-          )}
         </div>
-        {error && <p className="text-center text-red-600">{error}</p>}
-        <div className="flex justify-center">
-          <button
-            disabled={disabled || loading}
-            onClick={handleCreate}
-            className={`rounded-md px-6 py-3 text-white ${disabled || loading ? 'bg-gray-300' : 'bg-green-600 hover:bg-green-700  cursor-pointer transform transition duration-150 hover:scale-105 hover:bg-gray-300/90'}`}
-          >
-            {loading ? 'Creating…' : 'Create Session'}
-          </button>
-        </div>
+
+        {/* Error message */}
+        {error && <p className="text-red-600 text-center">{error}</p>}
+
+        {/* Create session button */}
+        <button
+          disabled={disabled || loading}
+          onClick={handleCreate}
+          className={`w-full rounded-2xl py-3 font-bold text-white ${disabled || loading
+              ? 'bg-gray-300 cursor-not-allowed'
+              : 'bg-green-800 hover:bg-green-900'
+            }`}
+        >
+          {loading ? 'Creating…' : 'Create Session'}
+        </button>
       </div>
     </main>
   )
