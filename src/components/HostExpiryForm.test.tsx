@@ -44,7 +44,7 @@ describe('HostExpiryForm', () => {
   })
 
   it('disables button when required props are missing or hours <= 0', () => {
-    render(<HostExpiryForm {...defaultProps} hours={0} />)
+    render(<HostExpiryForm {...defaultProps} />)
     const button = screen.getByRole('button', { name: /create session/i })
     expect(button).toBeEnabled() // hours prop isn't used in props, state starts at 2
 
