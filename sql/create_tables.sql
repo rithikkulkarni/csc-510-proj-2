@@ -1,7 +1,6 @@
 -- ================================================
 -- Supabase Database Setup
 -- Tables: sessions, users, restaurants, votes
--- Sample data included for restaurants
 -- ================================================
 
 -- ------------------------
@@ -9,10 +8,26 @@
 -- ------------------------
 CREATE TABLE IF NOT EXISTS sessions (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    code VARCHAR(10) UNIQUE NOT NULL,
+    code VARCHAR(4) UNIQUE NOT NULL,
     status TEXT DEFAULT 'open', -- 'open' or 'closed'
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT code_format_check CHECK (char_length(code) = 4 AND code = upper(code))
 );
+
+-- Trigger function to auto-uppercase codes
+CREATE OR REPLACE FUNCTION uppercase_code()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.code := upper(NEW.code);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to run before insert or update
+CREATE TRIGGER trigger_uppercase_code
+BEFORE INSERT OR UPDATE ON sessions
+FOR EACH ROW
+EXECUTE FUNCTION uppercase_code();
 
 -- ------------------------
 -- 2. Users Table
