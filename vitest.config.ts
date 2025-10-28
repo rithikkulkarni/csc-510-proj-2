@@ -48,8 +48,7 @@ export default defineConfig({
       reporter: ["text", "lcov", "html"],
       all: true,
       include: [
-        "src/app/**/*.{test,spec}.{ts,tsx}",
-        'src/components/**/*.{test,spec}.{ts,tsx}',
+        "src/**/*.{ts,tsx,js,jsx}"
       ],
       exclude: [
         "node_modules/",
