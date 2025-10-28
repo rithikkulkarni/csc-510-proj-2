@@ -1,100 +1,60 @@
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { vi } from "vitest";
-import JoinForm from "../../components/JoinForm";
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import JoinForm from '../../components/JoinForm';
 
-// Define a type for a minimal supabase client used in JoinForm
-type SupabaseMock = {
-    from: (table: string) => {
-        select: (columns: string) => {
-            eq: (column: string, value: string) => {
-                maybeSingle: () => Promise<{ data: any; error: any }>;
-            };
-        };
-    };
-};
-
-describe("JoinForm", () => {
-    let singleMock: () => Promise<{ data: any; error: any }>;
-
-    beforeEach(() => {
-        singleMock = vi.fn();
-    });
-
-    it("renders the input and button", () => {
+describe('JoinForm Component', () => {
+    test('renders input and submit button', () => {
         render(<JoinForm />);
-        expect(screen.getByPlaceholderText(/Enter Code/i)).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: /Join/i })).toBeInTheDocument();
+
+        expect(screen.getByTestId('join-input')).toBeInTheDocument();
+        expect(screen.getByTestId('join-button')).toBeInTheDocument();
     });
 
-    it("filters non-letter characters and forces uppercase", () => {
+    test('accepts only letters, converts to uppercase, and limits to 4 characters', () => {
         render(<JoinForm />);
-        const input = screen.getByPlaceholderText(/Enter Code/i) as HTMLInputElement;
 
-        fireEvent.change(input, { target: { value: "abc123!@" } });
-        expect(input.value).toBe("ABC");
+        const input = screen.getByTestId('join-input') as HTMLInputElement;
+        fireEvent.change(input, { target: { value: 'a1b2c3d4e' } });
+
+        // Only letters, max 4, uppercase
+        expect(input.value).toBe('ABCD');
     });
 
-    it("displays success message when code exists", async () => {
-        singleMock = vi.fn().mockResolvedValue({ data: { id: 1, code: "ABCD" }, error: null });
+    test('shows success message when correct code is entered', () => {
+        render(<JoinForm />);
 
-        const mockSupabase: SupabaseMock = {
-            from: () => ({
-                select: () => ({
-                    eq: () => ({
-                        maybeSingle: singleMock,
-                    }),
-                }),
-            }),
-        } as any;
+        const input = screen.getByTestId('join-input') as HTMLInputElement;
+        const button = screen.getByTestId('join-button');
 
-        render(<JoinForm supabase={mockSupabase as any} />);
-
-        const input = screen.getByPlaceholderText(/Enter Code/i);
-        const button = screen.getByRole("button", { name: /Join/i });
-
-        fireEvent.change(input, { target: { value: "ABCD" } });
+        fireEvent.change(input, { target: { value: 'abcd' } });
         fireEvent.click(button);
 
-        const message = await screen.findByTestId("join-message");
-        expect(message).toHaveTextContent("Success! Joined session 1.");
+        expect(screen.getByTestId('join-message')).toHaveTextContent(
+            'Success! Session joined.'
+        );
     });
 
-    it("displays invalid code message when code does not exist", async () => {
-        singleMock = vi.fn().mockResolvedValue({ data: null, error: null });
+    test('shows error message when incorrect code is entered', () => {
+        render(<JoinForm />);
 
-        const mockSupabase: SupabaseMock = {
-            from: () => ({
-                select: () => ({
-                    eq: () => ({
-                        maybeSingle: singleMock,
-                    }),
-                }),
-            }),
-        } as any;
+        const input = screen.getByTestId('join-input') as HTMLInputElement;
+        const button = screen.getByTestId('join-button');
 
-        render(<JoinForm supabase={mockSupabase as any} />);
-
-        const input = screen.getByPlaceholderText(/Enter Code/i);
-        const button = screen.getByRole("button", { name: /Join/i });
-
-        fireEvent.change(input, { target: { value: "XYZ" } });
+        fireEvent.change(input, { target: { value: 'WXYZ' } });
         fireEvent.click(button);
 
-        const message = await screen.findByTestId("join-message");
-        expect(message).toHaveTextContent("Invalid code.");
+        expect(screen.getByTestId('join-message')).toHaveTextContent(
+            'Invalid code.'
+        );
     });
 
-    it("prevents default form submission", () => {
-        const preventDefaultSpy = vi.spyOn(Event.prototype, "preventDefault");
-
+    test('does not submit if input is empty', () => {
         render(<JoinForm />);
-        const form = screen.getByTestId("join-form");
-        const input = screen.getByPlaceholderText(/Enter Code/i);
 
-        fireEvent.change(input, { target: { value: "HELLO" } });
-        fireEvent.submit(form);
+        const button = screen.getByTestId('join-button');
+        fireEvent.click(button);
 
-        expect(preventDefaultSpy).toHaveBeenCalled();
+        // Message should not exist
+        expect(screen.queryByTestId('join-message')).toBeNull();
     });
 });
