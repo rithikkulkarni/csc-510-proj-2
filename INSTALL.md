@@ -106,17 +106,24 @@ npm run test:coverage
 
 ```
 .
-├── components/      # Reusable UI components
-├── pages/           # Next.js pages
-├── public/          # Static assets
-├── package.json
-├── vitest.config.ts # Vitest testing framework configuration
-└── next.config.js   # Next.js configuration (Next.js is a React framework built on top of Node.js)
+├── src/
+|   ├── app/                # Next.js pages (.tsx, .test.tsx)
+|   ├── components/         # UI components
+|   └── lib/                # .ts files for external connectivity
+├── sql/                    # SQL configuration + setup files
+├── public/                 # Static assets (images, etc.)
+├── package.json            # Lists project dependencies, scripts, and metadata
+├── package-lock.json       # Auto-generated file locking exact dependency versions
+├── next.config.ts          # Next.js configuration file (TypeScript version)
+├── vitest.config.ts        # Configuration for Vitest (unit testing framework)
+├── vitest.setup.ts         # Global setup file for test environment initialization
+├── postcss.config.mjs      # Config for PostCSS (Tailwind)
+└── README.md               # Main documentation and usage guide for the project
 ```
 
 ---
 
-## 🧑‍💻 Contributing
+## Contributing
 
 1. Fork the repo
 2. Create your feature branch (`git checkout -b feature/my-feature`)
@@ -126,6 +133,6 @@ npm run test:coverage
 
 ---
 
-## 📝 License
+## License
 
 This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
