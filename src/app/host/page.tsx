@@ -1,57 +1,76 @@
+// 'use client'
+
+// import { BackButton } from "@/components/BackButton";
+// import Link from "next/link";
+// import { useRouter } from "next/navigation";
+
+// export default function Host() {
+//   const router = useRouter();
+
+//   // Keep your labels, but pass a clean id in the URL
+//   const priceRanges = [
+//     { id: "0-10", label: "$0-10" },
+//     { id: "10-20", label: "$10-20" },
+//     { id: "30-50", label: "$30-50" },
+//     { id: "50+", label: "$50+" },
+//   ];
+
+//   return (
+//     <div className="min-h-screen bg-white text-gray-900">
+//       <BackButton />
+
+//       <main className="flex min-h-[80vh] flex-col items-center justify-center gap-6">
+//         {priceRanges.map((range) => (
+//           <button
+//             key={range.id}
+//             className="w-48 rounded-md border border-gray-400 px-6 py-3 text-lg font-medium shadow-sm hover:bg-gray-50 cursor-pointer transform transition duration-150 hover:scale-105 hover:bg-gray-300/90"
+//             onClick={() =>
+//               router.push(`/host/location?price=${encodeURIComponent(range.id)}`)
+//             }
+//             aria-label={`Select price range ${range.label}`}
+//           >
+//             {range.label}
+//           </button>
+//         ))}
+//       </main>
+//     </div>
+//   );
+// }
+
 'use client'
 
 import { useRouter } from 'next/navigation'
 import { BackButton } from '@/components/BackButton'
-import React from 'react'
+
+const priceOptions = [
+  { idx: 0, label: '$ (Inexpensive)' },
+  { idx: 1, label: '$$ (Moderate)' },
+  { idx: 2, label: '$$$ (Expensive)' },
+  { idx: 3, label: '$$$$ (Very Expensive)' },
+]
 
 export default function Host() {
   const router = useRouter()
-
-  const priceRanges = [
-    { id: '0-10', label: 'Inexpensive', dollars: 1 },
-    { id: '10-20', label: 'Moderately Expensive', dollars: 2 },
-    { id: '30-50', label: 'Expensive', dollars: 3 },
-    { id: '50+', label: 'Very Expensive', dollars: 4 },
-  ]
 
   return (
     <div className="min-h-screen bg-green-100 flex flex-col items-center px-4 py-8">
       <BackButton />
 
-      {/* Title and description */}
-      <h1 className="text-4xl md:text-5xl font-extrabold text-black mb-2 text-center">
-        Pick a Price Range
-      </h1>
-      <p className="text-black text-lg md:text-xl mb-8 text-center">
-        Choose a range to guide your group’s decision
-      </p>
+      <main className="flex min-h-[80vh] flex-col items-center justify-center gap-6">
+        <h1 className="text-2xl font-semibold">Select a Price Range</h1>
 
-      {/* Price buttons */}
-      <main className="flex flex-col gap-6 w-full max-w-md">
-        {priceRanges.map((range) => (
-          <button
-            key={range.id}
-            className="w-full rounded-2xl bg-yellow-50 border border-green-300 px-6 py-4 text-lg font-bold text-gray-900 shadow-md hover:shadow-lg hover:bg-yellow-100 transition transform duration-150 hover:scale-105 flex justify-center items-center gap-2"
-            onClick={() =>
-              router.push(`/host/location?price=${encodeURIComponent(range.id)}`)
-            }
-            aria-label={`Select price range ${range.label}`}
-          >
-            {/* Dollar signs in front */}
-            <span className="flex gap-1">
-              {Array(range.dollars)
-                .fill('$')
-                .map((d, i) => (
-                  <span key={i} className="text-green-800">
-                    {d}
-                  </span>
-                ))}
-            </span>
-
-            {/* Label */}
-            <span className="ml-2">{range.label}</span>
-          </button>
-        ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {priceOptions.map((p) => (
+            <button
+              key={p.idx}
+              className="w-64 rounded-md border border-gray-400 px-6 py-3 text-lg font-medium shadow-sm cursor-pointer transform transition duration-150 hover:scale-105 hover:bg-gray-100"
+              onClick={() => router.push(`/host/location?priceIdx=${p.idx}`)}
+              aria-label={`Select price range ${p.label}`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
       </main>
     </div>
   )
