@@ -53,7 +53,7 @@ export default function Host() {
   const router = useRouter()
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="min-h-screen bg-green-100 flex flex-col items-center px-4 py-8">
       <BackButton />
 
       <main className="flex min-h-[80vh] flex-col items-center justify-center gap-6">
