@@ -72,26 +72,19 @@
 
 // src/app/host/page.test.tsx
 import React from 'react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import Host from './page'
 import { useRouter } from 'next/navigation'
 
-// Mock next/navigation once
+// --- Mocks ---
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(),
 }))
 
-// Mock BackButton
 vi.mock('@/components/BackButton', () => ({
   BackButton: () => <button>Back</button>,
 }))
-
-// Helper to match by the end of the accessible name (avoids escaping $ and parens)
-const nameEndsWith =
-  (ending: string) =>
-  (_: unknown, name: string | null) =>
-    typeof name === 'string' && name.endsWith(ending)
 
 describe('Host Page', () => {
   beforeEach(() => {
@@ -108,21 +101,17 @@ describe('Host Page', () => {
   it('renders all price range buttons', () => {
     render(<Host />)
 
-    expect(
-      screen.getByRole('button', { name: nameEndsWith('$ (Inexpensive)') })
-    ).toBeInTheDocument()
+    const buttons = [
+      '$ (Inexpensive)',
+      '$$ (Moderate)',
+      '$$$ (Expensive)',
+      '$$$$ (Very Expensive)',
+    ]
 
-    expect(
-      screen.getByRole('button', { name: nameEndsWith('$$ (Moderate)') })
-    ).toBeInTheDocument()
-
-    expect(
-      screen.getByRole('button', { name: nameEndsWith('$$$ (Expensive)') })
-    ).toBeInTheDocument()
-
-    expect(
-      screen.getByRole('button', { name: nameEndsWith('$$$$ (Very Expensive)') })
-    ).toBeInTheDocument()
+    for (const label of buttons) {
+      expect(screen.getByRole('button', { name: `Select price range ${label}` }))
+        .toBeInTheDocument()
+    }
   })
 
   it('renders the back button', () => {
