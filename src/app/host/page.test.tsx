@@ -72,7 +72,7 @@
 
 // src/app/host/page.test.tsx
 import React from 'react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import Host from './page'
 import { useRouter } from 'next/navigation'
@@ -82,13 +82,19 @@ vi.mock('next/navigation', () => ({
   useRouter: vi.fn(),
 }))
 
-// Mock BackButton (as you already do)
+// Mock BackButton
 vi.mock('@/components/BackButton', () => ({
   BackButton: () => <button>Back</button>,
 }))
 
+// Helper to match by the end of the accessible name (avoids escaping $ and parens)
+const nameEndsWith =
+  (ending: string) =>
+  (_: unknown, name: string | null) =>
+    typeof name === 'string' && name.endsWith(ending)
+
 describe('Host Page', () => {
-  it('renders all price range buttons', () => {
+  beforeEach(() => {
     vi.mocked(useRouter).mockReturnValue({
       push: vi.fn(),
       back: vi.fn(),
@@ -97,27 +103,31 @@ describe('Host Page', () => {
       replace: vi.fn(),
       prefetch: vi.fn(),
     } as any)
+  })
 
+  it('renders all price range buttons', () => {
     render(<Host />)
 
-    // Query by role+name using aria-label text substrings
-    expect(screen.getByRole('button', { name: /Inexpensive/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Moderate/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Expensive\)/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Very Expensive/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: nameEndsWith('$ (Inexpensive)') })
+    ).toBeInTheDocument()
+
+    expect(
+      screen.getByRole('button', { name: nameEndsWith('$$ (Moderate)') })
+    ).toBeInTheDocument()
+
+    expect(
+      screen.getByRole('button', { name: nameEndsWith('$$$ (Expensive)') })
+    ).toBeInTheDocument()
+
+    expect(
+      screen.getByRole('button', { name: nameEndsWith('$$$$ (Very Expensive)') })
+    ).toBeInTheDocument()
   })
 
   it('renders the back button', () => {
-    vi.mocked(useRouter).mockReturnValue({
-      push: vi.fn(),
-      back: vi.fn(),
-      forward: vi.fn(),
-      refresh: vi.fn(),
-      replace: vi.fn(),
-      prefetch: vi.fn(),
-    } as any)
-
     render(<Host />)
     expect(screen.getByText('Back')).toBeInTheDocument()
   })
 })
+
