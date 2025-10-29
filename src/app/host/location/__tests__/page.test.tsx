@@ -63,13 +63,10 @@ vi.mock('next/navigation', () => ({
 vi.mock('next/dynamic', () => ({
   default:
     (_loader: any, _opts?: any) =>
-    // This stub stands in for ./parts/LeafletMap
     (props: any) => (
       <div
         data-testid="mock-map"
-        onClick={() =>
-          props?.onPick?.({ lat: 35.7796, lng: -78.6382 })
-        }
+        onClick={() => props?.onPick?.({ lat: 35.7796, lng: -78.6382 })}
       >
         MockMap
       </div>
@@ -101,7 +98,6 @@ describe('HostLocationPage (minimal)', () => {
     // initialize select from priceIdx=2
     searchParamsInit = 'priceIdx=2'
 
-    // One tile fetch returns 2 places; only $$$ (idx 2) should remain
     mockPlacesResponse([
       {
         id: 'p1',
@@ -129,8 +125,8 @@ describe('HostLocationPage (minimal)', () => {
     // Click the mocked map to set picked coords
     fireEvent.click(screen.getByTestId('mock-map'))
 
-    // Select should be initialized from query (value "2")
-    const select = screen.getByLabelText(/price/i) as HTMLSelectElement
+    // Select should be initialized to 2; query by role (combobox) instead of label
+    const select = screen.getByRole('combobox') as HTMLSelectElement
     expect(select.value).toBe('2')
 
     // Run a search
@@ -162,11 +158,10 @@ describe('HostLocationPage (minimal)', () => {
 
   it('keeps search disabled without a picked point and shows the tip', async () => {
     searchParamsInit = ''
-    mockPlacesResponse([]) // fetch should not be called due to disabled button
+    mockPlacesResponse([])
 
     render(<Page />)
 
-    // Without clicking the map, "Find Restaurants" stays disabled
     const findBtn = screen.getByRole('button', { name: /find restaurants/i })
     expect(findBtn).toHaveAttribute('disabled')
 
@@ -177,9 +172,10 @@ describe('HostLocationPage (minimal)', () => {
 
     // Clicking a disabled button does nothing; no error should appear
     fireEvent.click(findBtn)
-    await new Promise((r) => setTimeout(r, 50)) // allow any microtasks
+    await new Promise((r) => setTimeout(r, 20))
     expect(
       screen.queryByText(/click the map to set a center point/i)
     ).not.toBeInTheDocument()
   })
 })
+
