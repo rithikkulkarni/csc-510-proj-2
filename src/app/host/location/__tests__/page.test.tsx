@@ -37,13 +37,13 @@
 //   });
 // });
 
-// src/app/host/location/__tests__/page.new.test.tsx
+// src/app/host/location/__tests__/page.test.tsx
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import Page from '../page' // adjust if your path differs
+import Page from '../page'
 
-// ---------- Mocks ----------
+// -------------------- Mocks --------------------
 let searchParamsInit = ''
 
 vi.mock('next/navigation', () => ({
@@ -59,20 +59,24 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/host/location',
 }))
 
-// Mock the dynamic LeafletMap component to a simple div that triggers onPick
-vi.mock('../parts/LeafletMap', () => ({
-  __esModule: true,
-  default: ({ onPick }: { onPick: (p: { lat: number; lng: number }) => void }) => (
-    <div
-      data-testid="mock-map"
-      onClick={() => onPick({ lat: 35.7796, lng: -78.6382 })}
-    >
-      MockMap
-    </div>
-  ),
+// Mock next/dynamic so it returns a synchronous stub component
+vi.mock('next/dynamic', () => ({
+  default:
+    (_loader: any, _opts?: any) =>
+    // This stub stands in for ./parts/LeafletMap
+    (props: any) => (
+      <div
+        data-testid="mock-map"
+        onClick={() =>
+          props?.onPick?.({ lat: 35.7796, lng: -78.6382 })
+        }
+      >
+        MockMap
+      </div>
+    ),
 }))
 
-// Ensure fetch is mocked
+// Mock global fetch
 const originalFetch = global.fetch
 beforeEach(() => {
   searchParamsInit = ''
@@ -83,7 +87,7 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-// Small helper to prime a successful Google Places response
+// Helper to mock a Places API response
 function mockPlacesResponse(places: any[]) {
   vi.mocked(global.fetch as any).mockResolvedValue({
     ok: true,
@@ -91,13 +95,13 @@ function mockPlacesResponse(places: any[]) {
   })
 }
 
-// ---------- Tests ----------
+// -------------------- Tests --------------------
 describe('HostLocationPage (minimal)', () => {
   it('initializes price from query, performs search, then navigates to swipe', async () => {
-    // priceIdx=2 should initialize the <select> to $$$
+    // initialize select from priceIdx=2
     searchParamsInit = 'priceIdx=2'
 
-    // Mock one tile fetch → returns 2 places (one $$$ matches, one $$ filtered out)
+    // One tile fetch returns 2 places; only $$$ (idx 2) should remain
     mockPlacesResponse([
       {
         id: 'p1',
@@ -122,35 +126,33 @@ describe('HostLocationPage (minimal)', () => {
 
     render(<Page />)
 
-    // The mocked map will set picked coords when clicked
+    // Click the mocked map to set picked coords
     fireEvent.click(screen.getByTestId('mock-map'))
 
-    // Verify select is initialized to 2 (priceIdx from query)
+    // Select should be initialized from query (value "2")
     const select = screen.getByLabelText(/price/i) as HTMLSelectElement
     expect(select.value).toBe('2')
 
-    // Click "Find Restaurants"
-    fireEvent.click(screen.getByRole('button', { name: /find restaurants/i }))
+    // Run a search
+    const findBtn = screen.getByRole('button', { name: /find restaurants/i })
+    expect(findBtn).not.toHaveAttribute('disabled')
+    fireEvent.click(findBtn)
 
-    // Wait for the single matching $$$ place to show
+    // We should see the $$$ place only
     await waitFor(() => {
       expect(screen.getByText('Fancy Spot')).toBeInTheDocument()
     })
 
-    // "Begin swiping" becomes enabled; click it to navigate
+    // Begin swiping and assert navigation
     const begin = screen.getByRole('button', { name: /begin swiping/i })
     expect(begin).not.toHaveAttribute('disabled')
     fireEvent.click(begin)
 
-    // Assert router.push was called with the expected query params
-    // Retrieve the mocked router used by our page
     const { useRouter } = await import('next/navigation')
     const push = (useRouter() as any).push as unknown as ReturnType<typeof vi.fn>
-
     expect(push).toHaveBeenCalledTimes(1)
-    const url = String(push.mock.calls[0][0])
 
-    // It should include lat/lng (from map click), radiusMi (default 3), and priceIdx=2
+    const url = String(push.mock.calls[0][0])
     expect(url).toMatch(/^\/host\/swipe\?/)
     expect(url).toMatch(/lat=35\.7796/)
     expect(url).toMatch(/lng=-78\.6382/)
@@ -158,24 +160,26 @@ describe('HostLocationPage (minimal)', () => {
     expect(url).toMatch(/priceIdx=2/)
   })
 
-  it('shows an error if user tries to search without picking a point', async () => {
-    // No price param; still OK. But we will NOT click the map → no picked center.
+  it('keeps search disabled without a picked point and shows the tip', async () => {
     searchParamsInit = ''
-
-    // Even if fetch is mocked OK, the code should block before calling it.
-    mockPlacesResponse([])
+    mockPlacesResponse([]) // fetch should not be called due to disabled button
 
     render(<Page />)
 
-    fireEvent.click(screen.getByRole('button', { name: /find restaurants/i }))
+    // Without clicking the map, "Find Restaurants" stays disabled
+    const findBtn = screen.getByRole('button', { name: /find restaurants/i })
+    expect(findBtn).toHaveAttribute('disabled')
 
-    // Should show guidance error
+    // The guidance tip is visible
     expect(
-      await screen.findByText(/click the map to set a center point/i)
+      screen.getByText(/tip:\s*click the map to set the center\./i)
     ).toBeInTheDocument()
 
-    // Begin swiping is disabled
-    expect(screen.getByRole('button', { name: /begin swiping/i })).toHaveAttribute('disabled')
+    // Clicking a disabled button does nothing; no error should appear
+    fireEvent.click(findBtn)
+    await new Promise((r) => setTimeout(r, 50)) // allow any microtasks
+    expect(
+      screen.queryByText(/click the map to set a center point/i)
+    ).not.toBeInTheDocument()
   })
 })
-
