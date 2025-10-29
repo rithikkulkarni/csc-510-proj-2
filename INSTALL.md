@@ -85,6 +85,11 @@ npm start
 npm run test
 ```
 
+### With Coverage Report (coveralls)
+```bash
+npm run test:coverage
+```
+
 ---
 
 ## Common Issues
