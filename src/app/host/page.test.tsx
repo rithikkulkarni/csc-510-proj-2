@@ -6,25 +6,10 @@ import Host from './page';
 import { useRouter } from 'next/navigation';
 import { NavigateOptions, PrefetchOptions } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
-// // Mock the next/navigation module
-// vi.mock('next/navigation', () => ({
-//     useRouter: vi.fn(),
-// }));
-
-vi.mock('next/navigation', () => {
-  return {
-    useRouter: () => ({
-      push: vi.fn(),
-      back: vi.fn(),
-      forward: vi.fn(),
-      refresh: vi.fn(),
-      replace: vi.fn(),
-      prefetch: vi.fn(),
-    }),
-    // // If your page uses useSearchParams, mock it too:
-    // useSearchParams: () => new URLSearchParams(''), // or provide specific params
-  }
-})
+// Mock the next/navigation module
+vi.mock('next/navigation', () => ({
+    useRouter: vi.fn(),
+}));
 
 // Mock the BackButton component
 vi.mock('@/components/BackButton', () => ({
