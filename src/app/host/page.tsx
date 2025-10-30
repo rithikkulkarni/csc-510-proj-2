@@ -37,21 +37,21 @@
 //   );
 // }
 
-'use client'
+'use client';
 
-import React from 'react'
-import { useRouter } from 'next/navigation'
-import { BackButton } from '@/components/BackButton'
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { BackButton } from '@/components/BackButton';
 
 const priceOptions = [
   { idx: 0, label: '$ (Inexpensive)' },
   { idx: 1, label: '$$ (Moderate)' },
   { idx: 2, label: '$$$ (Expensive)' },
   { idx: 3, label: '$$$$ (Very Expensive)' },
-]
+];
 
 export default function Host() {
-  const router = useRouter()
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-green-100 flex flex-col items-center px-4 py-8">
@@ -74,5 +74,5 @@ export default function Host() {
         </div>
       </main>
     </div>
-  )
+  );
 }
