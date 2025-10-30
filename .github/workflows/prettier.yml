@@ -1,7 +1,7 @@
 name: prettier
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
 
 jobs:
@@ -27,7 +27,6 @@ jobs:
       # Fails the job if any file isn't formatted
       - name: Run Prettier
         run: npx prettier --check .
-
 
 env:
   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
