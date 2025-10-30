@@ -1,13 +1,15 @@
-name: lint
+name: prettier
 on:
   push:
     branches: [main]
   pull_request:
 
 jobs:
-  eslint:
-    name: Run ESLint
+  prettier:
+    name: Prettier Style/Code Format Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
@@ -17,12 +19,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Install deps
         run: npm ci
 
-      - name: Run ESLint
-        run: npm run lint
+      # Fails the job if any file isn't formatted
+      - name: Run Prettier
+        run: npx prettier --check .
 
 env:
   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}

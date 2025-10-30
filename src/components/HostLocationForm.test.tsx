@@ -1,16 +1,16 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom";
-import HostLocationForm from "@/components/HostLocationForm";
-import React from "react";
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import HostLocationForm from '@/components/HostLocationForm';
+import React from 'react';
 
 // Mock Next.js router
 const pushMock = vi.fn();
-vi.mock("next/navigation", () => ({
+vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock }),
 }));
 
 // Mock the Map since it's dynamically imported
-vi.mock("@/app/host/location/parts/LeafletMap", () => ({
+vi.mock('@/app/host/location/parts/LeafletMap', () => ({
   __esModule: true,
   default: ({ onPick }: any) => (
     <div data-testid="mock-map">
@@ -19,20 +19,20 @@ vi.mock("@/app/host/location/parts/LeafletMap", () => ({
   ),
 }));
 
-describe("HostLocationForm", () => {
+describe('HostLocationForm', () => {
   beforeEach(() => {
     pushMock.mockReset();
   });
 
-  it("disables the Continue button if price is empty", () => {
+  it('disables the Continue button if price is empty', () => {
     render(<HostLocationForm price="" />);
-    const btn = screen.getByRole("button", { name: /continue/i });
+    const btn = screen.getByRole('button', { name: /continue/i });
     expect(btn).toBeDisabled();
   });
 
-  it("enables the Continue button after picking location and with valid price", () => {
+  it('enables the Continue button after picking location and with valid price', () => {
     render(<HostLocationForm price="10-20" />);
-    const btn = screen.getByRole("button", { name: /continue/i });
+    const btn = screen.getByRole('button', { name: /continue/i });
     expect(btn).toBeDisabled();
 
     // Pick location
@@ -43,7 +43,7 @@ describe("HostLocationForm", () => {
     expect(btn).toBeEnabled();
   });
 
-  it("navigates with correct query params on Continue click", () => {
+  it('navigates with correct query params on Continue click', () => {
     render(<HostLocationForm price="10-20" />);
 
     // Pick location
@@ -55,7 +55,7 @@ describe("HostLocationForm", () => {
     // fireEvent.change(radiusInput, { target: { value: "7" } });
 
     // Click continue
-    const btn = screen.getByRole("button", { name: /continue/i });
+    const btn = screen.getByRole('button', { name: /continue/i });
     fireEvent.click(btn);
 
     // Commented out because the test depends on the radius input above

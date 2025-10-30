@@ -14,6 +14,7 @@ Before you begin, make sure you have the following installed:
 - **Git** (for cloning the repository)
 
 To check your versions:
+
 ```bash
 node -v
 npm -v
@@ -34,11 +35,13 @@ cd csc-510-proj-2
 ### 2. Install dependencies
 
 Using **npm**:
+
 ```bash
 npm install
 ```
 
 Or using **yarn**:
+
 ```bash
 yarn install
 ```
@@ -59,20 +62,24 @@ yarn install
    NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=XXX
    ```
 
-*(Do not commit `.env.local` to version control.)*
+_(Do not commit `.env.local` to version control.)_
 
 ---
 
 ## Running the App
 
 ### Development Mode
+
 ```bash
 npm run dev
 ```
+
 The app will be available at [http://localhost:3000](http://localhost:3000).
 
 ### Production Build
+
 To create an optimized production build:
+
 ```bash
 npm run build
 npm start
@@ -81,11 +88,13 @@ npm start
 ---
 
 ## Running Tests
+
 ```bash
 npm run test
 ```
 
 ### With Coverage Report (coveralls)
+
 ```bash
 npm run test:coverage
 ```
@@ -94,11 +103,11 @@ npm run test:coverage
 
 ## Common Issues
 
-| Problem | Solution |
-|----------|-----------|
-| **Port 3000 already in use** | Run `npm run dev -- -p 4000` to use a different port |
+| Problem                         | Solution                                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Port 3000 already in use**    | Run `npm run dev -- -p 4000` to use a different port                                                                  |
 | **Dependencies not installing** | Delete `node_modules` and `package-lock.json`, then reinstall: `rm -rf node_modules package-lock.json && npm install` |
-| **Env vars not loading** | Ensure `.env.local` exists and is not misnamed (case-sensitive) |
+| **Env vars not loading**        | Ensure `.env.local` exists and is not misnamed (case-sensitive)                                                       |
 
 ---
 
