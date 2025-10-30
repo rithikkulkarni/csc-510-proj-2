@@ -27,19 +27,19 @@ function HostConfirmInner() {
   const lng = Number(sp.get('lng') ?? '0')
   const radiusMiles = Math.max(1, Number(sp.get('radiusMiles') ?? '3'))
 
-  const [code, setCode] = useState<string | null>(null)
+  // Generate once; no setState in effect
+  const [code] = useState<string | null>(() => generateCode(4))
 
-  // Create the session code and persist constraints (client-side for now)
+  // Persist constraints to localStorage when inputs (or code) change
   useEffect(() => {
-    const c = generateCode(4)
+    if (!code) return
     const payload = { priceIdx, lat, lng, radiusMiles }
     try {
-      localStorage.setItem(`session:${c}`, JSON.stringify(payload))
-      setCode(c)
-    } catch (e) {
-      console.error('Failed saving session', e)
+      localStorage.setItem(`session:${code}`, JSON.stringify(payload))
+    } catch {
+      // Swallow persist errors to satisfy no-console and keep UI responsive
     }
-  }, [priceIdx, lat, lng, radiusMiles])
+  }, [code, priceIdx, lat, lng, radiusMiles])
 
   return (
     <main className="min-h-screen bg-yellow-50">

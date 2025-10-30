@@ -11,8 +11,7 @@ export async function getSessionByCode(codeInput: string) {
     .single();
 
   if (error) {
-    console.error('Error fetching session:', error);
-    return null;
+    throw new Error('Error fetching session: ${error.message}');
   }
   
   return data;

@@ -7,7 +7,8 @@ type Props = {
 }
 
 export default function Countdown({ expiresAt }: Props) {
-  const [now, setNow] = useState(Date.now())
+  // Lazy initializer avoids calling Date.now() during render
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
