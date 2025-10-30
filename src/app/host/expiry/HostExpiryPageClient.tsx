@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import HostExpiryForm from '@/components/HostExpiryForm'
 import { useSearchParams } from 'next/navigation'
 
