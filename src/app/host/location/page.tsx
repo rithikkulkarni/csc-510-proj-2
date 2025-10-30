@@ -357,8 +357,8 @@
 //   )
 // }
 'use client'
-import React from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -374,14 +374,14 @@ type Place = {
   lat?: number
   lng?: number
   mapsUri?: string
-  _priceIdx?: number | null
+  _priceIdx: number | null // required to avoid undefined
 }
 
 const MILES_TO_METERS = 1609.34
 const LAST_SEARCH_KEY = 'lastSearch_v1'
 
 // ---- utils ----
-function toPriceIndex(priceLevel: any): number | null {
+function toPriceIndex(priceLevel: unknown): number | null {
   if (priceLevel == null) return null
   if (typeof priceLevel === 'number') {
     const n = Math.max(0, Math.min(3, priceLevel))
@@ -395,7 +395,7 @@ function toPriceIndex(priceLevel: any): number | null {
     PRICE_LEVEL_VERY_EXPENSIVE: 3,
     PRICE_LEVEL_UNSPECIFIED: null,
   }
-  return map[priceLevel] ?? null
+  return map[String(priceLevel)] ?? null
 }
 
 function priceLabelFromIndex(idx: number | null): string {
@@ -415,12 +415,20 @@ function haversineMiles(a: { lat: number; lng: number }, b: { lat: number; lng: 
   return 2 * R * Math.asin(Math.sqrt(s))
 }
 
-// meters->degrees helpers
 const degLat = (m: number) => m / 111_320
-const degLng = (m: number, baseLat: number) =>
-  m / (111_320 * Math.cos((baseLat * Math.PI) / 180))
+const degLng = (m: number, baseLat: number) => m / (111_320 * Math.cos((baseLat * Math.PI) / 180))
 
+/* ---------- Page export with Suspense ---------- */
 export default function HostLocationPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-gray-600">Loading search settings…</div>}>
+      <HostLocationInner />
+    </Suspense>
+  )
+}
+
+/* ---------- Actual client content ---------- */
+function HostLocationInner() {
   const router = useRouter()
 
   // ---- price passed from Host page ----
@@ -448,8 +456,6 @@ export default function HostLocationPage() {
 
   // ---- tiling params (derived from radius) ----
   const radiusMeters = radiusMi * MILES_TO_METERS
-
-  // Choose a tile size relative to the total radius for decent coverage/QPS
   const tileRadiusMeters = Math.max(800, Math.min(2500, radiusMeters / 3)) // ~0.5–1.5 mi
   const tileSpacingMeters = tileRadiusMeters * 1.5 // center-to-center spacing
 
@@ -477,7 +483,6 @@ export default function HostLocationPage() {
     return centers
   }, [picked, radiusMeters, tileSpacingMeters])
 
-  // ---- field mask for Places (keep lean but include location!) ----
   const FIELD_MASK = useMemo(
     () =>
       [
@@ -495,7 +500,7 @@ export default function HostLocationPage() {
   )
 
   // One Nearby call for a given tile center
-  async function fetchNearbyAtCenter(center: { lat: number; lng: number }) {
+  async function fetchNearbyAtCenter(center: { lat: number; lng: number }): Promise<Place[]> {
     const resp = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
       method: 'POST',
       headers: {
@@ -522,8 +527,7 @@ export default function HostLocationPage() {
     }
 
     const data = await resp.json()
-    // Dedupe by ID and normalize
-    const batch = (data?.places ?? [])
+    const batch: Place[] = (data?.places ?? [])
       .filter((p: any) => {
         const id = p.id ?? p.googleMapsUri ?? p.displayName?.text
         if (!id) return false
@@ -531,7 +535,7 @@ export default function HostLocationPage() {
         seenIds.current.add(id)
         return true
       })
-      .map((p: any) => {
+      .map((p: any): Place => {
         const _priceIdx = toPriceIndex(p.priceLevel)
         return {
           id: p.id,
@@ -544,23 +548,21 @@ export default function HostLocationPage() {
           lng: p.location?.longitude,
           mapsUri: p.googleMapsUri,
           _priceIdx,
-        } as Place
+        }
       })
 
-    // Price filter that EXCLUDES N/A when a specific price is selected
-    return selectedPriceIdx === null
-      ? batch
-      : batch.filter((pl) => pl._priceIdx === selectedPriceIdx)
+    if (selectedPriceIdx == null) return batch
+    const target = selectedPriceIdx
+    return batch.filter((pl: Place) => pl._priceIdx === target)
   }
 
-  // Persist the most recent successful search (criteria + results)
   function persistLastSearch(currentResults: Place[]) {
     if (!picked) return
     try {
       const payload = {
         picked,
         radiusMi,
-        selectedPriceIdx, // null means "All" (incl. N/A)
+        selectedPriceIdx,
         results: currentResults,
         savedAt: Date.now(),
       }
@@ -589,32 +591,28 @@ export default function HostLocationPage() {
       for (let i = 0; i < tileCenters.length; i++) {
         const batch = await fetchNearbyAtCenter(tileCenters[i])
         aggregated.push(...batch)
-        // small pause helps avoid bursts/429s
-        await new Promise((r) => setTimeout(r, 250))
+        await new Promise((r) => setTimeout(r, 250)) // gentle delay
       }
 
-      // Safety: keep only those truly within the selected radius
       const within = aggregated.filter((pl) =>
         pl.lat && pl.lng
-          ? haversineMiles(picked, { lat: pl.lat, lng: pl.lng }) <= radiusMi
+          ? haversineMiles(picked!, { lat: pl.lat, lng: pl.lng }) <= radiusMi
           : true
       )
 
-      // Sort by distance ascending
       const sorted = within.sort((a, b) => {
         const da =
           a.lat && a.lng
-            ? haversineMiles(picked, { lat: a.lat, lng: a.lng })
+            ? haversineMiles(picked!, { lat: a.lat, lng: a.lng })
             : Number.POSITIVE_INFINITY
         const db =
           b.lat && b.lng
-            ? haversineMiles(picked, { lat: b.lat, lng: b.lng })
+            ? haversineMiles(picked!, { lat: b.lat, lng: b.lng })
             : Number.POSITIVE_INFINITY
         return da - db
       })
 
       setResults(sorted)
-      // <-- Save immediately so the swipe page can load instantly
       persistLastSearch(sorted)
     } catch (e: any) {
       setError(e?.message || 'Failed to fetch')
@@ -623,7 +621,6 @@ export default function HostLocationPage() {
     }
   }
 
-  // Navigate to swipe page with query params; ensure results are saved
   function goToSwipe() {
     if (!picked) {
       setError('Pick a point on the map first.')
@@ -633,17 +630,13 @@ export default function HostLocationPage() {
       setError('Find restaurants first, then begin swiping.')
       return
     }
-
-    // Ensure sessionStorage has the latest snapshot
     persistLastSearch(results)
-
     const qs = new URLSearchParams({
       lat: String(picked.lat),
       lng: String(picked.lng),
       radiusMi: String(radiusMi),
       priceIdx: selectedPriceIdx === null ? '' : String(selectedPriceIdx),
     }).toString()
-
     router.push(`/host/swipe?${qs}`)
   }
 
@@ -669,9 +662,7 @@ export default function HostLocationPage() {
               <label className="text-sm text-gray-700">Price</label>
               <select
                 value={selectedPriceIdx ?? ''}
-                onChange={(e) =>
-                  setSelectedPriceIdx(e.target.value ? Number(e.target.value) : null)
-                }
+                onChange={(e) => setSelectedPriceIdx(e.target.value ? Number(e.target.value) : null)}
                 className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2"
               >
                 <option value="">All</option>
@@ -703,7 +694,6 @@ export default function HostLocationPage() {
               {loading ? 'Searching…' : 'Find Restaurants'}
             </button>
 
-            {/* NEW: Begin swiping */}
             <button
               onClick={goToSwipe}
               disabled={!picked || results.length === 0}
@@ -713,11 +703,7 @@ export default function HostLocationPage() {
             </button>
 
             {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-            {!picked && (
-              <p className="mt-2 text-sm text-gray-600">
-                Tip: click the map to set the center.
-              </p>
-            )}
+            {!picked && <p className="mt-2 text-sm text-gray-600">Tip: click the map to set the center.</p>}
           </div>
 
           <div className="rounded-xl border p-4 shadow-sm">
