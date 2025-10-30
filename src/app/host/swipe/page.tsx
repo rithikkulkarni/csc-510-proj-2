@@ -177,7 +177,7 @@ type Place = {
   lat?: number
   lng?: number
   mapsUri?: string
-  _priceIdx?: number | null
+  _priceIdx: number | null // <- REQUIRED; never undefined
 }
 
 type LastSearchPayload = {
@@ -224,9 +224,20 @@ export default function SwipePage() {
         setError('Saved search is incomplete. Please re-run the search.')
         return
       }
+
       // Filter out any dupes or missing names just in case
-      const deduped = dedupeBy((r) => r.id || `${r.name}|${r.address}`, parsed.results)
-      const seeded: TournamentItem[] = deduped.map((p) => ({ ...p, wins: 0, losses: 0 }))
+      const deduped = dedupeBy(
+        (r) => r.id || `${r.name}|${r.address}`,
+        parsed.results
+      )
+
+      // Normalize legacy entries that might have _priceIdx === undefined
+      const seeded: TournamentItem[] = deduped.map((p) => ({
+        ...p,
+        _priceIdx: p._priceIdx ?? null,
+        wins: 0,
+        losses: 0,
+      }))
 
       if (seeded.length < 2) {
         setError('Need at least 2 restaurants to compare. Please widen your search.')
@@ -242,7 +253,15 @@ export default function SwipePage() {
   }, [])
 
   const havePair = useMemo(() => {
-    return !finished && items.length >= 2 && leaderIdx >= 0 && leaderIdx < items.length && cursor >= 0 && cursor < items.length && leaderIdx !== cursor
+    return (
+      !finished &&
+      items.length >= 2 &&
+      leaderIdx >= 0 &&
+      leaderIdx < items.length &&
+      cursor >= 0 &&
+      cursor < items.length &&
+      leaderIdx !== cursor
+    )
   }, [finished, items, leaderIdx, cursor])
 
   function pickWinner(which: 'left' | 'right') {
@@ -250,12 +269,12 @@ export default function SwipePage() {
     const aIdx = leaderIdx
     const bIdx = cursor
     const winnerIdx = which === 'left' ? aIdx : bIdx
-    const loserIdx  = which === 'left' ? bIdx : aIdx
+    const loserIdx = which === 'left' ? bIdx : aIdx
 
     setItems((prev) => {
       const clone = [...prev]
       clone[winnerIdx] = { ...clone[winnerIdx], wins: clone[winnerIdx].wins + 1 }
-      clone[loserIdx]  = { ...clone[loserIdx],  losses: clone[loserIdx].losses + 1 }
+      clone[loserIdx] = { ...clone[loserIdx], losses: clone[loserIdx].losses + 1 }
       return clone
     })
 
@@ -275,8 +294,8 @@ export default function SwipePage() {
     setItems((prev) => {
       if (prev.length < 3) return prev
       const newArr = [...prev]
-      const [leader] = newArr.splice(leaderIdx, 1)     // remove current leader
-      newArr.push(leader)                               // put it at end
+      const [leader] = newArr.splice(leaderIdx, 1) // remove current leader
+      newArr.push(leader) // put it at end
       return newArr
     })
     // reset pointers to first two items
@@ -324,7 +343,9 @@ export default function SwipePage() {
         {payload && (
           <p className="text-sm text-gray-600 mt-1">
             Center ({payload.picked.lat.toFixed(4)}, {payload.picked.lng.toFixed(4)}) · radius {payload.radiusMi} mi ·{' '}
-            {payload.selectedPriceIdx === null ? 'All prices (incl. N/A)' : `Price: ${priceLabelFromIndex(payload.selectedPriceIdx)}`}
+            {payload.selectedPriceIdx === null
+              ? 'All prices (incl. N/A)'
+              : `Price: ${priceLabelFromIndex(payload.selectedPriceIdx)}`}
           </p>
         )}
 
@@ -383,7 +404,9 @@ export default function SwipePage() {
               {top3.map((p, i) => (
                 <li key={p.id || `${p.name}|${p.address}`} className="rounded-md border p-3">
                   <div className="flex items-center justify-between">
-                    <div className="font-medium">{i + 1}. {p.name}</div>
+                    <div className="font-medium">
+                      {i + 1}. {p.name}
+                    </div>
                     <div className="text-sm text-gray-600">
                       Wins: {p.wins}{' '}
                       {typeof p.rating === 'number' && <span className="ml-2">⭐ {p.rating.toFixed(1)}</span>}

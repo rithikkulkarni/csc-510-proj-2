@@ -1,10 +1,18 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import React, { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { generateCode } from '@/lib/sessionCode'
 
 export default function HostConfirmPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-yellow-50 p-6 text-gray-700">Loading…</main>}>
+      <HostConfirmInner />
+    </Suspense>
+  )
+}
+
+function HostConfirmInner() {
   const sp = useSearchParams()
   const router = useRouter()
 
@@ -26,7 +34,7 @@ export default function HostConfirmPage() {
     const c = generateCode(4)
     const payload = { priceIdx, lat, lng, radiusMiles }
     try {
-    localStorage.setItem(`session:${c}`, JSON.stringify(payload))
+      localStorage.setItem(`session:${c}`, JSON.stringify(payload))
       setCode(c)
     } catch (e) {
       console.error('Failed saving session', e)
