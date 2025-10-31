@@ -1,23 +1,23 @@
-import { describe, it, expect } from "vitest";
-import { supabase } from "../../../../lib/supabaseClient";
+import { describe, it, expect } from 'vitest';
+import { supabase } from '../../../../lib/supabaseClient';
 
 // Utility to generate a random 4-letter uppercase code
 function generateCode(length = 4) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let code = "";
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let code = '';
   for (let i = 0; i < length; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return code;
 }
 
-describe("Supabase Automated Session Test", () => {
-  it("creates, fetches, and deletes a test session", async () => {
+describe('Supabase Automated Session Test', () => {
+  it('creates, fetches, and deletes a test session', async () => {
     const testCode = generateCode();
 
     // 1. Insert test session
     const { data: inserted, error: insertError } = await supabase
-      .from("sessions")
+      .from('sessions')
       .insert([{ code: testCode }])
       .select()
       .single();
@@ -30,9 +30,9 @@ describe("Supabase Automated Session Test", () => {
 
     // 2. Fetch the session by code
     const { data: fetched, error: fetchError } = await supabase
-      .from("sessions")
-      .select("*")
-      .eq("code", testCode)
+      .from('sessions')
+      .select('*')
+      .eq('code', testCode)
       .single();
 
     if (fetchError) {
@@ -42,10 +42,7 @@ describe("Supabase Automated Session Test", () => {
     expect(fetched.code).toBe(testCode);
 
     // 3. Delete the test session
-    const { error: deleteError } = await supabase
-      .from("sessions")
-      .delete()
-      .eq("id", inserted.id);
+    const { error: deleteError } = await supabase.from('sessions').delete().eq('id', inserted.id);
 
     if (deleteError) {
       throw new Error(`Failed to delete test session: ${deleteError.message}`);
@@ -53,9 +50,9 @@ describe("Supabase Automated Session Test", () => {
 
     // 4. Verify deletion
     const { data: verifyDeleted } = await supabase
-      .from("sessions")
-      .select("*")
-      .eq("code", testCode)
+      .from('sessions')
+      .select('*')
+      .eq('code', testCode)
       .single();
 
     expect(verifyDeleted).toBeNull();

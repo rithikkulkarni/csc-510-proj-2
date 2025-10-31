@@ -136,29 +136,29 @@
 //   )
 // }
 
-'use client'
+'use client';
 
-import { useEffect, useMemo, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'next/navigation';
 
 type Place = {
-  id?: string
-  name: string
-  address?: string
-  rating?: number
-  priceLevel?: any
-  openNow?: boolean
-  lat?: number
-  lng?: number
-  mapsUri?: string
-  _priceIdx?: number | null
-}
+  id?: string;
+  name: string;
+  address?: string;
+  rating?: number;
+  priceLevel?: any;
+  openNow?: boolean;
+  lat?: number;
+  lng?: number;
+  mapsUri?: string;
+  _priceIdx?: number | null;
+};
 
 function toPriceIndex(priceLevel: any): number | null {
-  if (priceLevel == null) return null
+  if (priceLevel == null) return null;
   if (typeof priceLevel === 'number') {
-    const n = Math.max(0, Math.min(3, priceLevel))
-    return Number.isFinite(n) ? n : null
+    const n = Math.max(0, Math.min(3, priceLevel));
+    return Number.isFinite(n) ? n : null;
   }
   const map: Record<string, number | null> = {
     PRICE_LEVEL_FREE: 0,
@@ -166,38 +166,38 @@ function toPriceIndex(priceLevel: any): number | null {
     PRICE_LEVEL_MODERATE: 1,
     PRICE_LEVEL_EXPENSIVE: 2,
     PRICE_LEVEL_VERY_EXPENSIVE: 3,
-  }
-  return map[String(priceLevel)] ?? null
+  };
+  return map[String(priceLevel)] ?? null;
 }
 
 function priceLabelFromIndex(idx: number | null | undefined) {
-  if (idx == null) return 'Any'
-  return ['$', '$$', '$$$', '$$$$'][Math.max(0, Math.min(3, idx))]
+  if (idx == null) return 'Any';
+  return ['$', '$$', '$$$', '$$$$'][Math.max(0, Math.min(3, idx))];
 }
 
 // haversine (miles)
 function haversineMiles(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
-  const R = 3958.7613
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180
-  const lat1 = (a.lat * Math.PI) / 180
-  const lat2 = (b.lat * Math.PI) / 180
-  const s = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2
-  return 2 * R * Math.asin(Math.sqrt(s))
+  const R = 3958.7613;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
 }
 
 // meters -> degrees (approx)
-const degLat = (m: number) => m / 111_320
-const degLng = (m: number, baseLat: number) => m / (111_320 * Math.cos((baseLat * Math.PI) / 180))
+const degLat = (m: number) => m / 111_320;
+const degLng = (m: number, baseLat: number) => m / (111_320 * Math.cos((baseLat * Math.PI) / 180));
 
 export default function JoinSessionPage() {
-  const params = useParams<{ code: string }>()
-  const code = params?.code
+  const params = useParams<{ code: string }>();
+  const code = params?.code;
 
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [session, setSession] = useState<any | null>(null)
-  const [results, setResults] = useState<Place[]>([])
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [session, setSession] = useState<any | null>(null);
+  const [results, setResults] = useState<Place[]>([]);
 
   // Field mask for Places API
   const FIELD_MASK = useMemo(
@@ -213,44 +213,44 @@ export default function JoinSessionPage() {
         'places.googleMapsUri',
       ].join(','),
     []
-  )
+  );
 
   useEffect(() => {
     async function run() {
-      if (!code) return
+      if (!code) return;
       try {
-        setLoading(true)
-        setError(null)
-        setResults([])
+        setLoading(true);
+        setError(null);
+        setResults([]);
 
         // 1) Get saved constraints from the session (price, center, radius)
-        const res = await fetch(`/api/sessions/${encodeURIComponent(code)}`)
-        if (!res.ok) throw new Error('Failed to load session')
-        const data = await res.json()
-        const s = data?.session
-        if (!s) throw new Error('Invalid session response')
-        setSession(s)
+        const res = await fetch(`/api/sessions/${encodeURIComponent(code)}`);
+        if (!res.ok) throw new Error('Failed to load session');
+        const data = await res.json();
+        const s = data?.session;
+        if (!s) throw new Error('Invalid session response');
+        setSession(s);
 
         // DB compatibility: some schemas use price_level, others price_range
         const priceLevelOneToFour: number | null =
           typeof s.price_level === 'number'
             ? s.price_level
             : typeof s.price_range === 'number'
-            ? s.price_range
-            : null
-        const priceIdx = priceLevelOneToFour != null ? priceLevelOneToFour - 1 : null
+              ? s.price_range
+              : null;
+        const priceIdx = priceLevelOneToFour != null ? priceLevelOneToFour - 1 : null;
 
-        const center = { lat: Number(s.latitude), lng: Number(s.longitude) }
-        const radiusMeters: number = Number(s.radius) // stored in meters
-        const maxMiles = radiusMeters / 1609.34
+        const center = { lat: Number(s.latitude), lng: Number(s.longitude) };
+        const radiusMeters: number = Number(s.radius); // stored in meters
+        const maxMiles = radiusMeters / 1609.34;
 
         // 2) Build a small grid of Nearby queries to cover the circle
-        const tileRadius = Math.max(500, Math.floor(radiusMeters / 2))
-        const spacing = tileRadius * 1.5
-        const centers: { lat: number; lng: number }[] = [{ ...center }]
-        const rings = Math.ceil(radiusMeters / spacing)
+        const tileRadius = Math.max(500, Math.floor(radiusMeters / 2));
+        const spacing = tileRadius * 1.5;
+        const centers: { lat: number; lng: number }[] = [{ ...center }];
+        const rings = Math.ceil(radiusMeters / spacing);
         for (let r = 1; r <= rings; r++) {
-          const d = r * spacing
+          const d = r * spacing;
           const cand: Array<[number, number]> = [
             [d, 0],
             [0, d],
@@ -260,18 +260,18 @@ export default function JoinSessionPage() {
             [-d, d],
             [-d, -d],
             [d, -d],
-          ]
+          ];
           for (const [dx, dy] of cand) {
             centers.push({
               lat: center.lat + degLat(dy),
               lng: center.lng + degLng(dx, center.lat),
-            })
+            });
           }
         }
 
         // 3) Query Places for each tile center
-        const seen = new Set<string>()
-        const collected: Place[] = []
+        const seen = new Set<string>();
+        const collected: Place[] = [];
 
         async function fetchNearbyAt(c: { lat: number; lng: number }) {
           const r = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
@@ -289,18 +289,18 @@ export default function JoinSessionPage() {
                 circle: { center: { latitude: c.lat, longitude: c.lng }, radius: tileRadius },
               },
             }),
-          })
-          if (!r.ok) throw new Error(`Places API error ${r.status}`)
-          const j = await r.json()
-          return (j?.places ?? []) as any[]
+          });
+          if (!r.ok) throw new Error(`Places API error ${r.status}`);
+          const j = await r.json();
+          return (j?.places ?? []) as any[];
         }
 
         for (const c of centers) {
-          const batch = await fetchNearbyAt(c)
+          const batch = await fetchNearbyAt(c);
           for (const p of batch) {
-            const id = p.id ?? p.googleMapsUri ?? p.displayName?.text
-            if (!id || seen.has(id)) continue
-            seen.add(id)
+            const id = p.id ?? p.googleMapsUri ?? p.displayName?.text;
+            if (!id || seen.has(id)) continue;
+            seen.add(id);
 
             const item: Place = {
               id,
@@ -313,41 +313,41 @@ export default function JoinSessionPage() {
               lng: p.location?.longitude,
               mapsUri: p.googleMapsUri,
               _priceIdx: toPriceIndex(p.priceLevel),
-            }
+            };
 
             // apply session price filter if specified
-            if (priceIdx != null && item._priceIdx != null && item._priceIdx !== priceIdx) continue
+            if (priceIdx != null && item._priceIdx != null && item._priceIdx !== priceIdx) continue;
 
             // keep only those within the overall session radius
             if (item.lat != null && item.lng != null) {
-              const d = haversineMiles(center, { lat: item.lat, lng: item.lng })
-              if (d > maxMiles + 0.25) continue
+              const d = haversineMiles(center, { lat: item.lat, lng: item.lng });
+              if (d > maxMiles + 0.25) continue;
             }
-            collected.push(item)
+            collected.push(item);
           }
           // gentle pacing
-          await new Promise((r) => setTimeout(r, 200))
+          await new Promise((r) => setTimeout(r, 200));
         }
 
         // sort by rating desc, then name
         collected.sort((a, b) => {
-          const ra = a.rating ?? 0
-          const rb = b.rating ?? 0
-          if (rb !== ra) return rb - ra
-          return (a.name || '').localeCompare(b.name || '')
-        })
+          const ra = a.rating ?? 0;
+          const rb = b.rating ?? 0;
+          if (rb !== ra) return rb - ra;
+          return (a.name || '').localeCompare(b.name || '');
+        });
 
-        setResults(collected)
+        setResults(collected);
       } catch (e: any) {
-        setError(e?.message || 'Failed to load restaurants')
+        setError(e?.message || 'Failed to load restaurants');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    run()
-  }, [code, FIELD_MASK])
+    run();
+  }, [code, FIELD_MASK]);
 
-  if (!code) return <div className="p-6">Missing session code.</div>
+  if (!code) return <div className="p-6">Missing session code.</div>;
 
   return (
     <main className="min-h-screen bg-green-100 px-4 py-8">
@@ -360,8 +360,8 @@ export default function JoinSessionPage() {
               typeof session.price_level === 'number'
                 ? session.price_level - 1
                 : typeof session.price_range === 'number'
-                ? session.price_range - 1
-                : null
+                  ? session.price_range - 1
+                  : null
             )}
             &nbsp;· Radius: {(Number(session.radius) / 1609.34).toFixed(1)} mi
           </p>
@@ -400,5 +400,5 @@ export default function JoinSessionPage() {
         )}
       </div>
     </main>
-  )
+  );
 }

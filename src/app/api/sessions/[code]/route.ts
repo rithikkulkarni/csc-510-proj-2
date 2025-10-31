@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabaseClient';
 
 // GET: Fetch a session by its code
 export async function GET(
@@ -10,13 +10,13 @@ export async function GET(
     const { code } = await context.params;
 
     if (!code) {
-      return NextResponse.json({ error: "Missing session code" }, { status: 400 });
+      return NextResponse.json({ error: 'Missing session code' }, { status: 400 });
     }
 
     const { data: session, error } = await supabase
-      .from("sessions")
-      .select("*")
-      .eq("code", code)
+      .from('sessions')
+      .select('*')
+      .eq('code', code)
       .single();
 
     if (error) {
@@ -25,25 +25,22 @@ export async function GET(
 
     return NextResponse.json({ session });
   } catch (err) {
-    return NextResponse.json({ error: "Unexpected server error" }, { status: 500 });
+    return NextResponse.json({ error: 'Unexpected server error' }, { status: 500 });
   }
 }
 
 // POST: Optionally, create a new session
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ code: string }> }
-) {
+export async function POST(request: NextRequest, context: { params: Promise<{ code: string }> }) {
   try {
     const body = await request.json();
     const code = body?.code;
 
     if (!code) {
-      return NextResponse.json({ error: "Missing session code" }, { status: 400 });
+      return NextResponse.json({ error: 'Missing session code' }, { status: 400 });
     }
 
     const { data: newSession, error } = await supabase
-      .from("sessions")
+      .from('sessions')
       .insert({ code })
       .select()
       .single();
@@ -54,6 +51,6 @@ export async function POST(
 
     return NextResponse.json({ session: newSession }, { status: 201 });
   } catch (err) {
-    return NextResponse.json({ error: "Unexpected server error" }, { status: 500 });
+    return NextResponse.json({ error: 'Unexpected server error' }, { status: 500 });
   }
 }

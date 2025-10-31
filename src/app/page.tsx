@@ -1,9 +1,9 @@
 'use client';
 
-import React from "react";
-import Image from "next/image";
-import Link from "next/link";
-import JoinForm from "../components/JoinForm";
+import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import JoinForm from '../components/JoinForm';
 
 export default function Home() {
   return (
@@ -22,11 +22,16 @@ export default function Home() {
 
           <div className="flex flex-col gap-5 md:gap-6 w-full">
             <div className="relative w-full">
-              <span className="absolute -top-6 left-0 text-xl md:text-2xl font-bold tracking-widest text-gray-700">HOST</span>
+              <span className="absolute -top-6 left-0 text-xl md:text-2xl font-bold tracking-widest text-gray-700">
+                HOST
+              </span>
               <div className="h-px w-full bg-green-300 mt-2" />
             </div>
 
-            <Link href="/host" className="w-full md:w-auto text-center rounded-2xl bg-green-800 text-white font-bold text-lg md:text-xl py-4 px-6 shadow-md hover:shadow-lg hover:bg-green-900 transition transform duration-150 hover:scale-105">
+            <Link
+              href="/host"
+              className="w-full md:w-auto text-center rounded-2xl bg-green-800 text-white font-bold text-lg md:text-xl py-4 px-6 shadow-md hover:shadow-lg hover:bg-green-900 transition transform duration-150 hover:scale-105"
+            >
               Create Session
             </Link>
           </div>
@@ -40,7 +45,9 @@ export default function Home() {
 
           <div className="flex flex-col gap-5 md:gap-6 w-full">
             <div className="relative w-full">
-              <span className="absolute -top-6 left-0 text-xl md:text-2xl font-bold tracking-widest text-gray-700">JOIN</span>
+              <span className="absolute -top-6 left-0 text-xl md:text-2xl font-bold tracking-widest text-gray-700">
+                JOIN
+              </span>
               <div className="h-px w-full bg-green-300 mt-2" />
             </div>
 

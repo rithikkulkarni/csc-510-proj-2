@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import { MapContainer, TileLayer, Marker, Circle, useMap, useMapEvents } from 'react-leaflet'
-import { useEffect } from 'react'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
+import { MapContainer, TileLayer, Marker, Circle, useMap, useMapEvents } from 'react-leaflet';
+import { useEffect } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 // Fix default marker icon path for Leaflet in bundlers
 const DefaultIcon = L.icon({
@@ -12,27 +12,27 @@ const DefaultIcon = L.icon({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
-})
-L.Marker.prototype.options.icon = DefaultIcon
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 function ClickToSet({ onPick }: { onPick: (pos: { lat: number; lng: number }) => void }) {
   useMapEvents({
     click(e) {
-      onPick({ lat: e.latlng.lat, lng: e.latlng.lng })
+      onPick({ lat: e.latlng.lat, lng: e.latlng.lng });
     },
-  })
-  return null
+  });
+  return null;
 }
 
 // Imperatively recenter when `picked` changes (no React state)
 function RecenterOnPick({ picked }: { picked: { lat: number; lng: number } | null }) {
-  const map = useMap()
+  const map = useMap();
   useEffect(() => {
     if (picked) {
-      map.setView([picked.lat, picked.lng], 12)
+      map.setView([picked.lat, picked.lng], 12);
     }
-  }, [picked, map])
-  return null
+  }, [picked, map]);
+  return null;
 }
 
 export default function LeafletMap({
@@ -40,12 +40,12 @@ export default function LeafletMap({
   onPick,
   radiusMeters = 1609, // default 1 mile
 }: {
-  picked: { lat: number; lng: number } | null
-  onPick: (pos: { lat: number; lng: number }) => void
-  radiusMeters?: number
+  picked: { lat: number; lng: number } | null;
+  onPick: (pos: { lat: number; lng: number }) => void;
+  radiusMeters?: number;
 }) {
-  const initialCenter: [number, number] = [40.0, -95.0] // USA-ish
-  const initialZoom = 4
+  const initialCenter: [number, number] = [40.0, -95.0]; // USA-ish
+  const initialZoom = 4;
 
   return (
     <MapContainer
@@ -73,5 +73,5 @@ export default function LeafletMap({
         </>
       )}
     </MapContainer>
-  )
+  );
 }

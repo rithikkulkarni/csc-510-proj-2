@@ -1,11 +1,10 @@
-import React from 'react'
+import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
 // --- helpers ---
 const makeSearchParams = (obj: Record<string, string | number | undefined | null>) => ({
-  get: (k: string) =>
-    obj[k] === undefined || obj[k] === null ? null : String(obj[k]),
+  get: (k: string) => (obj[k] === undefined || obj[k] === null ? null : String(obj[k])),
 });
 
 // --- mocks must come BEFORE importing the SUT modules ---
@@ -44,13 +43,9 @@ describe('HostExpiryPage (Server component + Client child)', () => {
     useSearchParamsMock.mockReturnValue(makeSearchParams({}));
     render(<HostExpiryPage />);
 
-    expect(
-      screen.getByRole('heading', { name: /set expiration/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /set expiration/i })).toBeInTheDocument();
 
-    expect(
-      screen.getByText(/choose how long this session will be valid for/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/choose how long this session will be valid for/i)).toBeInTheDocument();
   });
 
   it('passes parsed search params to HostExpiryForm', () => {
@@ -78,9 +73,7 @@ describe('HostExpiryPage (Server component + Client child)', () => {
     render(<HostExpiryPage />);
 
     // Defaults: price '', lat 0, lng 0, radiusMiles 5
-    expect(screen.getByTestId('host-expiry-form')).toHaveTextContent(
-      'Price:|Lat:0|Lng:0|Radius:5'
-    );
+    expect(screen.getByTestId('host-expiry-form')).toHaveTextContent('Price:|Lat:0|Lng:0|Radius:5');
   });
 
   it('clamps radiusMiles to 5 when <= 0', () => {

@@ -11,5 +11,6 @@ npm run test
 npm run test:coverage
 
 // How to create a test
-1) Create a file in 'src/app/tests/' that has the file extension .test.tsx (instead of .tsx)
-2) Follow the format of home.test.tsx, our ultra-trivial test case that checks if our landing page has absolutely imploded
+
+1. Create a file in 'src/app/tests/' that has the file extension .test.tsx (instead of .tsx)
+2. Follow the format of home.test.tsx, our ultra-trivial test case that checks if our landing page has absolutely imploded

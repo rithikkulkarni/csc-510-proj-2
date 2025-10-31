@@ -145,7 +145,7 @@
 //         method: "POST",
 //         headers: {
 //           "Content-Type": "application/json",
-//           "X-Goog-Api-Key": process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY!, 
+//           "X-Goog-Api-Key": process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY!,
 //           "X-Goog-FieldMask": [
 //             "places.displayName",
 //             "places.formattedAddress",
@@ -251,10 +251,9 @@
 //   );
 // }
 
+'use client';
 
-'use client'
-
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from 'react';
 
 export default function Host() {
   const [loading, setLoading] = useState(false);
@@ -269,27 +268,34 @@ export default function Host() {
 
   // ---- TILING SETTINGS ----
   // Each tile is a smaller circle we query via Nearby (New).
-  const tileRadiusMeters = 2000;                // ~2 km tiles (adjust to taste)
-  const tileSpacingMeters = tileRadiusMeters*1.5; // center-to-center spacing
+  const tileRadiusMeters = 2000; // ~2 km tiles (adjust to taste)
+  const tileSpacingMeters = tileRadiusMeters * 1.5; // center-to-center spacing
 
   // meters->degrees (approx)
-  const degLat = (m:number) => m / 111_320;
-  const degLng = (m:number, baseLat:number) => m / (111_320 * Math.cos(baseLat * Math.PI / 180));
+  const degLat = (m: number) => m / 111_320;
+  const degLng = (m: number, baseLat: number) =>
+    m / (111_320 * Math.cos((baseLat * Math.PI) / 180));
 
   // Build a spiral/ring of offsets that cover the whole user radius
   const tileCenters = useMemo(() => {
-    const centers: Array<{lat:number; lng:number}> = [];
+    const centers: Array<{ lat: number; lng: number }> = [];
     centers.push({ lat, lng }); // center tile
 
     // number of rings needed to cover search radius
     const rings = Math.ceil(searchRadiusMeters / tileSpacingMeters);
-    for (let r=1; r<=rings; r++) {
+    for (let r = 1; r <= rings; r++) {
       const d = r * tileSpacingMeters;
-      const candidates: Array<[number,number]> = [
-        [ d, 0], [0,  d], [-d, 0], [0, -d],
-        [ d,  d], [-d,  d], [-d, -d], [ d, -d],
+      const candidates: Array<[number, number]> = [
+        [d, 0],
+        [0, d],
+        [-d, 0],
+        [0, -d],
+        [d, d],
+        [-d, d],
+        [-d, -d],
+        [d, -d],
       ];
-      for (const [dx,dy] of candidates) {
+      for (const [dx, dy] of candidates) {
         centers.push({
           lat: lat + degLat(dy),
           lng: lng + degLng(dx, lat),
@@ -304,7 +310,7 @@ export default function Host() {
 
   function toPriceIndex(priceLevel: any): number | null {
     if (priceLevel == null) return null;
-    if (typeof priceLevel === "number") {
+    if (typeof priceLevel === 'number') {
       const n = Math.max(0, Math.min(3, priceLevel));
       return Number.isFinite(n) ? n : null;
     }
@@ -314,40 +320,40 @@ export default function Host() {
       PRICE_LEVEL_MODERATE: 1,
       PRICE_LEVEL_EXPENSIVE: 2,
       PRICE_LEVEL_VERY_EXPENSIVE: 3,
-      PRICE_LEVEL_UNSPECIFIED: null
+      PRICE_LEVEL_UNSPECIFIED: null,
     };
     return map[priceLevel] ?? null;
   }
 
   function priceLabelFromIndex(idx: number | null): string {
-    if (idx == null) return "N/A";
-    return "$".repeat(idx + 1);
+    if (idx == null) return 'N/A';
+    return '$'.repeat(idx + 1);
   }
 
-  async function fetchNearbyAtCenter(center: {lat:number; lng:number}) {
-    const resp = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
-      method: "POST",
+  async function fetchNearbyAtCenter(center: { lat: number; lng: number }) {
+    const resp = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY!,
-        "X-Goog-FieldMask": [
-          "places.id",
-          "places.displayName",
-          "places.formattedAddress",
-          "places.rating",
-          "places.priceLevel",
-          "places.googleMapsUri",
-        ].join(","),
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY!,
+        'X-Goog-FieldMask': [
+          'places.id',
+          'places.displayName',
+          'places.formattedAddress',
+          'places.rating',
+          'places.priceLevel',
+          'places.googleMapsUri',
+        ].join(','),
       },
       body: JSON.stringify({
-        includedTypes: ["restaurant"],
+        includedTypes: ['restaurant'],
         locationRestriction: {
           circle: {
             center: { latitude: center.lat, longitude: center.lng },
             radius: tileRadiusMeters,
           },
         },
-        rankPreference: "POPULARITY",
+        rankPreference: 'POPULARITY',
         maxResultCount: 20, // Nearby (New) max
       }),
     });
@@ -358,24 +364,26 @@ export default function Host() {
     }
     const data = await resp.json();
 
-    const deduped = (data?.places ?? []).filter((p: any) => {
-      const id = p.id ?? p.googleMapsUri ?? p.displayName?.text;
-      if (!id) return false;
-      if (seenIds.current.has(id)) return false;
-      seenIds.current.add(id);
-      return true;
-    }).map((p: any) => ({
-      ...p,
-      _priceIdx: toPriceIndex(p.priceLevel),
-    }));
+    const deduped = (data?.places ?? [])
+      .filter((p: any) => {
+        const id = p.id ?? p.googleMapsUri ?? p.displayName?.text;
+        if (!id) return false;
+        if (seenIds.current.has(id)) return false;
+        seenIds.current.add(id);
+        return true;
+      })
+      .map((p: any) => ({
+        ...p,
+        _priceIdx: toPriceIndex(p.priceLevel),
+      }));
 
     // Price filter that EXCLUDES N/A when a specific price is selected
     return selectedPrice === null
-        ? deduped
-        : deduped.filter((p:any) => p._priceIdx === selectedPrice);
+      ? deduped
+      : deduped.filter((p: any) => p._priceIdx === selectedPrice);
   }
 
-  async function sweepTiles({reset=false}:{reset?:boolean} = {}) {
+  async function sweepTiles({ reset = false }: { reset?: boolean } = {}) {
     try {
       setLoading(true);
       setError(null);
@@ -385,15 +393,15 @@ export default function Host() {
       }
       // Simple sequential sweep with a tiny delay to be gentle on QPS.
       const aggregated: any[] = [];
-      for (let i=0; i<tileCenters.length; i++) {
+      for (let i = 0; i < tileCenters.length; i++) {
         const batch = await fetchNearbyAtCenter(tileCenters[i]);
         aggregated.push(...batch);
         // small delay helps avoid spikes & 429s
-        await new Promise(r => setTimeout(r, 250));
+        await new Promise((r) => setTimeout(r, 250));
       }
-      setResults(prev => reset ? aggregated : [...prev, ...aggregated]);
-    } catch (e:any) {
-      setError(e.message || "Failed to fetch");
+      setResults((prev) => (reset ? aggregated : [...prev, ...aggregated]));
+    } catch (e: any) {
+      setError(e.message || 'Failed to fetch');
     } finally {
       setLoading(false);
     }
@@ -403,13 +411,13 @@ export default function Host() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-white text-gray-900 p-8 space-y-6">
       {/* PRICE FILTER */}
       <div className="flex space-x-2 items-center">
-        <label htmlFor="price" className="font-semibold text-lg">Price Range:</label>
+        <label htmlFor="price" className="font-semibold text-lg">
+          Price Range:
+        </label>
         <select
           id="price"
-          value={selectedPrice ?? ""}
-          onChange={(e) =>
-            setSelectedPrice(e.target.value ? parseInt(e.target.value) : null)
-          }
+          value={selectedPrice ?? ''}
+          onChange={(e) => setSelectedPrice(e.target.value ? parseInt(e.target.value) : null)}
           className="border border-gray-400 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All</option>
@@ -423,20 +431,20 @@ export default function Host() {
       {/* ACTIONS */}
       <div className="flex gap-3">
         <button
-          onClick={() => sweepTiles({reset:true})}
+          onClick={() => sweepTiles({ reset: true })}
           disabled={loading}
           className="px-6 py-3 text-lg font-semibold rounded-lg bg-blue-600 text-white shadow-md hover:bg-blue-700 transition-transform hover:scale-105 disabled:opacity-50"
         >
-          {loading ? "Searching..." : "Find Restaurants"}
+          {loading ? 'Searching...' : 'Find Restaurants'}
         </button>
 
         <button
-          onClick={() => sweepTiles({reset:false})}
+          onClick={() => sweepTiles({ reset: false })}
           disabled={loading}
           className="px-6 py-3 text-lg font-semibold rounded-lg bg-gray-800 text-white shadow-md hover:bg-gray-900 transition-transform hover:scale-105 disabled:opacity-50"
           title="Fetch another full sweep (useful if you adjusted tile size/radius)"
         >
-          {loading ? "Loading..." : "Load all in area"}
+          {loading ? 'Loading...' : 'Load all in area'}
         </button>
       </div>
 
@@ -446,11 +454,14 @@ export default function Host() {
       {/* RESULTS */}
       <ul className="mt-4 w-full max-w-md space-y-3">
         {results.map((p) => (
-          <li key={(p.id ?? p.displayName?.text ?? p.googleMapsUri)} className="border rounded-md p-3 shadow-sm">
+          <li
+            key={p.id ?? p.displayName?.text ?? p.googleMapsUri}
+            className="border rounded-md p-3 shadow-sm"
+          >
             <p className="font-semibold">{p.displayName?.text}</p>
             <p className="text-sm text-gray-600">{p.formattedAddress}</p>
             <p className="text-sm text-gray-500">
-              ⭐ {p.rating ?? "N/A"} | Price: {priceLabelFromIndex(p._priceIdx)}
+              ⭐ {p.rating ?? 'N/A'} | Price: {priceLabelFromIndex(p._priceIdx)}
             </p>
             <a
               href={p.googleMapsUri}
