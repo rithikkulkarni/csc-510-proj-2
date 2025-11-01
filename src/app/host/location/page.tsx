@@ -794,7 +794,7 @@ function HostLocationInner() {
     if (restError) return setError('Failed to save restaurants: ' + restError.message);
 
     router.push(
-      `/host/confirm?code=${encodeURIComponent(session.code)}&ends_at=${encodeURIComponent(session.ends_at)}`
+      `/host/confirm?session=${encodeURIComponent(session.code)}&ends_at=${encodeURIComponent(session.ends_at)}`
     );
   }
 
