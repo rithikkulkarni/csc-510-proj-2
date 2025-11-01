@@ -29,7 +29,7 @@ export default function Home() {
             </div>
 
             <Link
-              href="/host"
+              href="/host/location"
               className="w-full md:w-auto text-center rounded-2xl bg-green-800 text-white font-bold text-lg md:text-xl py-4 px-6 shadow-md hover:shadow-lg hover:bg-green-900 transition transform duration-150 hover:scale-105"
             >
               Create Session
