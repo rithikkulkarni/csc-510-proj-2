@@ -451,7 +451,6 @@ type Place = {
 const MILES_TO_METERS = 1609.34;
 const LAST_SEARCH_KEY = 'lastSearch_v1';
 
-// ---- utils ----
 function toPriceIndex(priceLevel: unknown): number | null {
   if (priceLevel == null) return null;
   if (typeof priceLevel === 'number') return Math.max(0, Math.min(3, priceLevel));
@@ -681,15 +680,11 @@ function HostLocationInner() {
     );
   };
 
-  // --- Solo mode ---
   async function goToSwipe() {
-    if (!picked || results.length === 0) {
+    if (!picked || results.length === 0)
       return setError(!picked ? 'Pick a point first' : 'Find restaurants first');
-    }
-
     setError(null);
 
-    // Generate unique session code
     let session: any = null;
     let attempts = 0;
     while (!session && attempts < 5) {
@@ -709,12 +704,9 @@ function HostLocationInner() {
         .single();
 
       if (error) {
-        if (error.code === '23505')
-          attempts++; // duplicate code, retry
+        if (error.code === '23505') attempts++;
         else return setError('Failed to create session: ' + error.message);
-      } else {
-        session = data;
-      }
+      } else session = data;
     }
 
     if (!session) return setError('Failed to generate unique session code');
@@ -731,19 +723,15 @@ function HostLocationInner() {
       maps_uri: r.mapsUri ?? null,
     }));
 
-    const { error: restError } = await supabase.from('restaurants').insert(insertRestaurantsSolo); // <-- plain insert
-
+    const { error: restError } = await supabase.from('restaurants').insert(insertRestaurantsSolo);
     if (restError) return setError('Failed to save restaurants: ' + restError.message);
 
     router.push(`/host/swipe?session=${session.code}`);
   }
 
-  // --- Group mode ---
   async function goToConfirmPage() {
-    if (!picked || results.length === 0) {
+    if (!picked || results.length === 0)
       return setError(!picked ? 'Pick a point first' : 'Find restaurants first');
-    }
-
     setError(null);
 
     let session: any = null;
@@ -767,12 +755,9 @@ function HostLocationInner() {
         .single();
 
       if (error) {
-        if (error.code === '23505')
-          attempts++; // duplicate code
+        if (error.code === '23505') attempts++;
         else return setError('Failed to create session: ' + error.message);
-      } else {
-        session = data;
-      }
+      } else session = data;
     }
 
     if (!session) return setError('Failed to generate unique session code');
@@ -789,8 +774,7 @@ function HostLocationInner() {
       maps_uri: r.mapsUri ?? null,
     }));
 
-    const { error: restError } = await supabase.from('restaurants').insert(insertRestaurantsGroup); // plain insert
-
+    const { error: restError } = await supabase.from('restaurants').insert(insertRestaurantsGroup);
     if (restError) return setError('Failed to save restaurants: ' + restError.message);
 
     router.push(
@@ -799,9 +783,9 @@ function HostLocationInner() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 px-4 py-6">
-      <div className="mx-auto max-w-5xl grid gap-4 md:grid-cols-3">
-        <div className="md:col-span-2">
+    <div className="min-h-screen bg-gray-50 text-gray-900 px-4 py-6">
+      <div className="mx-auto max-w-6xl grid gap-6 md:grid-cols-3">
+        <div className="md:col-span-2 rounded-xl overflow-hidden shadow-md">
           <LeafletMap
             picked={picked}
             onPick={setPicked}
@@ -809,34 +793,34 @@ function HostLocationInner() {
           />
         </div>
 
-        <div className="md:col-span-1 space-y-4">
-          <div className="rounded-xl border p-4 shadow-sm">
-            <h2 className="text-lg font-semibold">Search Settings</h2>
+        <div className="md:col-span-1 space-y-6">
+          {/* Search Settings */}
+          <div className="rounded-xl bg-white border shadow-md p-5 space-y-4">
+            <h2 className="text-xl font-semibold">Search Settings</h2>
 
-            {/* --- Mode Toggle --- */}
-            <div className="mt-3 flex gap-2">
+            <div className="flex gap-2">
               <button
-                className={`flex-1 px-3 py-2 rounded-md font-medium ${mode === 'solo' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                className={`flex-1 py-2 rounded-md font-medium ${mode === 'solo' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}
                 onClick={() => setMode('solo')}
               >
                 Solo
               </button>
               <button
-                className={`flex-1 px-3 py-2 rounded-md font-medium ${mode === 'group' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                className={`flex-1 py-2 rounded-md font-medium ${mode === 'group' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'}`}
                 onClick={() => setMode('group')}
               >
                 Group
               </button>
             </div>
 
-            <div className="mt-3">
-              <label className="text-sm text-gray-700">Price</label>
+            <div>
+              <label className="block text-sm text-gray-700">Price</label>
               <select
                 value={selectedPriceIdx ?? ''}
                 onChange={(e) =>
                   setSelectedPriceIdx(e.target.value ? Number(e.target.value) : null)
                 }
-                className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2"
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
               >
                 <option value="">All</option>
                 <option value="0">$ (Inexpensive)</option>
@@ -846,8 +830,8 @@ function HostLocationInner() {
               </select>
             </div>
 
-            <div className="mt-3">
-              <label className="text-sm text-gray-700">Radius: {radiusMi} miles</label>
+            <div>
+              <label className="block text-sm text-gray-700">Radius: {radiusMi} miles</label>
               <input
                 type="range"
                 min={1}
@@ -855,24 +839,23 @@ function HostLocationInner() {
                 step={1}
                 value={radiusMi}
                 onChange={(e) => setRadiusMi(Number(e.target.value))}
-                className="w-full"
+                className="w-full mt-1"
               />
             </div>
 
             <button
               onClick={() => sweepTiles({ reset: true })}
               disabled={!picked || loading}
-              className="mt-4 w-full rounded-md bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
+              className="w-full mt-3 py-2 rounded-md bg-blue-600 text-white disabled:opacity-50"
             >
               {loading ? 'Searching…' : 'Find Restaurants'}
             </button>
 
-            {/* --- Mode-specific actions --- */}
             {mode === 'solo' && (
               <button
                 onClick={goToSwipe}
                 disabled={!picked || results.length === 0}
-                className="mt-4 w-full rounded-md bg-green-600 px-4 py-2 text-white disabled:opacity-50"
+                className="w-full mt-2 py-2 rounded-md bg-green-600 text-white disabled:opacity-50"
               >
                 Start Swiping
               </button>
@@ -880,8 +863,8 @@ function HostLocationInner() {
 
             {mode === 'group' && (
               <>
-                <div className="mt-3">
-                  <label className="text-sm text-gray-700">Session Expiration (hours)</label>
+                <div>
+                  <label className="block text-sm text-gray-700">Session Expiration (hours)</label>
                   <input
                     type="number"
                     min={1}
@@ -889,40 +872,41 @@ function HostLocationInner() {
                     step={1}
                     value={expiryHours}
                     onChange={(e) => setExpiryHours(Number(e.target.value))}
-                    className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2"
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
                   />
                 </div>
                 <button
                   onClick={goToConfirmPage}
                   disabled={!picked || results.length === 0}
-                  className="mt-4 w-full rounded-md bg-purple-600 px-4 py-2 text-white disabled:opacity-50"
+                  className="w-full mt-2 py-2 rounded-md bg-purple-600 text-white disabled:opacity-50"
                 >
                   Create Session
                 </button>
               </>
             )}
 
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
             {!picked && (
-              <p className="mt-2 text-sm text-gray-600">Tip: click the map to set the center.</p>
+              <p className="text-sm text-gray-500 mt-2">Tip: click the map to set the center.</p>
             )}
           </div>
 
-          <div className="rounded-xl border p-4 shadow-sm">
-            <h2 className="text-lg font-semibold">Results</h2>
+          {/* Results */}
+          <div className="rounded-xl bg-white border shadow-md p-5">
+            <h2 className="text-xl font-semibold">Results</h2>
             <ul className="mt-3 space-y-3">
               {results.map((r) => (
-                <li key={r.id || `${r.name}|${r.address}`} className="rounded-md border p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium">{r.name}</div>
+                <li key={r.id} className="rounded-md border p-3 space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">{r.name}</span>
                     {typeof r.rating === 'number' && (
-                      <div className="text-sm text-gray-600">⭐ {r.rating.toFixed(1)}</div>
+                      <span className="text-sm text-gray-600">⭐ {r.rating.toFixed(1)}</span>
                     )}
                   </div>
                   <div className="text-sm text-gray-600">{r.address}</div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Price: {priceLabelFromIndex(r._priceIdx)}{' '}
-                    {r.openNow !== undefined ? (r.openNow ? '· Open now' : '· Closed') : ''}
+                  <div className="text-xs text-gray-500">
+                    Price: {priceLabelFromIndex(r._priceIdx)}
+                    {r.openNow !== undefined ? (r.openNow ? ' · Open now' : ' · Closed') : ''}
                   </div>
                   {r.mapsUri && (
                     <a
