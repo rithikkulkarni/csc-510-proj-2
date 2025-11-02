@@ -202,7 +202,7 @@ function HostLocationInner() {
         savedAt: Date.now(),
       };
       sessionStorage.setItem(LAST_SEARCH_KEY, JSON.stringify(payload));
-    } catch { }
+    } catch {}
   }
 
   async function sweepTiles({ reset = true }: { reset?: boolean } = {}) {
@@ -381,15 +381,17 @@ function HostLocationInner() {
 
             <div className="flex gap-2">
               <button
-                className={`flex-1 py-2 rounded-md font-medium ${mode === 'solo' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
-                  }`}
+                className={`flex-1 py-2 rounded-md font-medium ${
+                  mode === 'solo' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
                 onClick={() => setMode('solo')}
               >
                 Solo
               </button>
               <button
-                className={`flex-1 py-2 rounded-md font-medium ${mode === 'group' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'
-                  }`}
+                className={`flex-1 py-2 rounded-md font-medium ${
+                  mode === 'group' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
                 onClick={() => setMode('group')}
               >
                 Group
