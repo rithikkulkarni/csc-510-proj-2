@@ -388,7 +388,9 @@ function HostLocationInner() {
             <div className="flex gap-2">
               <button
                 className={`flex-1 py-2 rounded-md font-medium ${
-                  mode === 'solo' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 cursor-pointer transition transform duration-150 hover:scale-105'
+                  mode === 'solo'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-200 text-gray-700 cursor-pointer transition transform duration-150 hover:scale-105'
                 }`}
                 onClick={() => setMode('solo')}
               >
@@ -396,7 +398,9 @@ function HostLocationInner() {
               </button>
               <button
                 className={`flex-1 py-2 rounded-md font-medium ${
-                  mode === 'group' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 cursor-pointer transition transform duration-150 hover:scale-105'
+                  mode === 'group'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-200 text-gray-700 cursor-pointer transition transform duration-150 hover:scale-105'
                 }`}
                 onClick={() => setMode('group')}
               >
@@ -437,7 +441,9 @@ function HostLocationInner() {
             <button
               onClick={() => sweepTiles({ reset: true })}
               disabled={!isFindEnabled}
-              className={'w-full mt-3 py-2 rounded-md bg-blue-600 text-white disabled:opacity-50 ${isFindEnabled ? cursor-pointer}'}
+              className={
+                'w-full mt-3 py-2 rounded-md bg-blue-600 text-white disabled:opacity-50 ${isFindEnabled ? cursor-pointer}'
+              }
             >
               {loading ? 'Searching…' : 'Find Restaurants'}
             </button>
@@ -446,7 +452,9 @@ function HostLocationInner() {
               <button
                 onClick={goToSwipe}
                 disabled={!canSwipe}
-                className={'w-full mt-2 py-2 rounded-md bg-green-600 text-white disabled:opacity-50 ${canSwipe ? cursor-pointer}'}
+                className={
+                  'w-full mt-2 py-2 rounded-md bg-green-600 text-white disabled:opacity-50 ${canSwipe ? cursor-pointer}'
+                }
               >
                 Start Swiping
               </button>
@@ -469,7 +477,9 @@ function HostLocationInner() {
                 <button
                   onClick={goToConfirmPage}
                   disabled={!canCreate}
-                  className={'w-full mt-2 py-2 rounded-md bg-purple-600 text-white disabled:opacity-50 ${canCreate ? cursor-pointer}'}
+                  className={
+                    'w-full mt-2 py-2 rounded-md bg-purple-600 text-white disabled:opacity-50 ${canCreate ? cursor-pointer}'
+                  }
                 >
                   Create Session
                 </button>

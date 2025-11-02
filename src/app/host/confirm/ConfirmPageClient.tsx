@@ -449,7 +449,7 @@ export default function ConfirmPageClient() {
               expired
                 ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed'
                 : 'bg-green-800 hover:bg-green-900'
-            } text-white font-bold py-3 px-6 rounded-2xl shadow-md transition transform duration-150 hover:scale-105`}
+            } text-white font-bold py-3 px-6 rounded-2xl shadow-md transition transform duration-150 hover:scale-105 cursor-pointer`}
           >
             {loading ? 'Joining...' : expired ? 'View Results' : 'Join Session'}
           </button>

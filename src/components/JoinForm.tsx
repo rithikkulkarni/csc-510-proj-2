@@ -175,6 +175,7 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
       )}
 
       <input
+        data-testid="join-input"
         name="code"
         type="text"
         placeholder="Enter Session Code"
@@ -185,11 +186,17 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
       />
 
       {!sessionExpired ? (
-        <button type="submit" disabled={loading} className={buttonClasses}>
+        <button
+          data-testid="join-button"
+          type="submit"
+          disabled={loading}
+          className={buttonClasses}
+        >
           {loading ? 'Joining...' : 'Join Session'}
         </button>
       ) : (
         <button
+          data-testid="join-button"
           type="button"
           onClick={handleViewResults}
           className={`${buttonClasses} bg-gray-500 hover:bg-gray-600`}
@@ -198,7 +205,11 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
         </button>
       )}
 
-      {message && <p className="text-red-600 font-medium mt-2">{message}</p>}
+      {message && (
+        <p data-testid="join-message" className="text-red-600 font-medium mt-2">
+          {message}
+        </p>
+      )}
     </form>
   );
 }

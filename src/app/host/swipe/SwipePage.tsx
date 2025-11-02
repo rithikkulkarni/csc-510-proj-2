@@ -257,7 +257,8 @@ function RestaurantCard({ place, onChoose }: { place: Place; onChoose: () => voi
   return (
     <button
       onClick={onChoose}
-      className="w-full border rounded-2xl p-6 text-left hover:shadow-lg transition bg-white"
+      className="w-full border rounded-2xl p-6 text-left hover:shadow-lg transition bg-white transition-transform transform
+        hover:scale-105 hover:shadow-xl cursor-pointer"
     >
       <div className="text-xl font-semibold text-green-900">{place.name}</div>
       {place.address && <div className="text-sm text-green-800">{place.address}</div>}
