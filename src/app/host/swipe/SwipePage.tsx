@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
+import { BackButton } from '@/components/BackButton';
 
 type Place = {
   id: number;
@@ -209,6 +210,8 @@ export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place
           Choose Your Favorite
         </h1>
 
+        <BackButton />
+
         {error && <div className="mt-4 text-red-700 text-center">{error}</div>}
 
         {!error && !finished && havePair && (
@@ -226,14 +229,14 @@ export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place
             <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
               <button
                 onClick={skipPair}
-                className="rounded-md bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400"
+                className="rounded-md bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400 cursor-pointer"
               >
                 Too Tough / Skip
               </button>
 
               <button
                 onClick={handleDoneVoting}
-                className="rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+                className="rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700 cursor-pointer"
               >
                 {sessionMode === 'group' ? 'Done Voting' : 'I Found My Place'}
               </button>

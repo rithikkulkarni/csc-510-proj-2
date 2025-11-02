@@ -10,7 +10,7 @@ export default function Home() {
     <div className="relative min-h-screen bg-green-100 text-gray-900 flex flex-col items-center px-4 py-8">
       <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">Food Finder</h1>
       <p className="text-gray-700 text-lg md:text-xl mb-8 text-center">
-        Decisions are hard. Eating together shouldn’t be.
+        Decisions are hard. Eating together shouldn't be.
       </p>
 
       <main className="flex flex-col gap-10 w-full max-w-5xl">
@@ -54,7 +54,7 @@ export default function Home() {
             <div className="w-full">
               <JoinForm
                 inputClassName="bg-white rounded-lg border border-gray-300 px-4 py-2 w-full text-lg"
-                buttonClassName="w-full rounded-2xl bg-green-800 text-white font-bold text-lg py-4 px-6 shadow-md hover:shadow-lg hover:bg-green-900 transition transform duration-150 hover:scale-105"
+                buttonClassName="w-full rounded-2xl bg-green-800 text-white font-bold text-lg py-4 px-6 shadow-md hover:shadow-lg hover:bg-green-900 transition transform duration-150 hover:scale-105 cursor-pointer"
               />
             </div>
           </div>
