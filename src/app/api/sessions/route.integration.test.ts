@@ -66,7 +66,6 @@ describe('POST /api/sessions integration', () => {
     // Cleanup: delete the test session
     const { error: delErr } = await serverSupabase.from('sessions').delete().eq('id', id);
     if (delErr) {
-      // eslint-disable-next-line no-console
       console.warn('Failed to delete test session:', delErr.message || delErr);
     }
   });

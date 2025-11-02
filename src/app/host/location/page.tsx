@@ -1,366 +1,9 @@
-// // 'use client'
-
-// // import HostLocationForm from '@/components/HostLocationForm'
-
-// // export default function HostLocationPage({ searchParams }: { searchParams: Record<string, string | undefined> }) {
-// //   const price = searchParams.price ?? ''
-
-// //   return <HostLocationForm price={price} />
-// // }
-
-// 'use client'
-
-// import { useEffect, useMemo, useRef, useState } from 'react'
-// import dynamic from 'next/dynamic'
-// import { useSearchParams } from 'next/navigation'
-
-// const LeafletMap = dynamic(() => import('./parts/LeafletMap'), { ssr: false })
-
-// type Place = {
-//   id: string
-//   name: string
-//   address?: string
-//   rating?: number
-//   priceLevel?: any
-//   openNow?: boolean
-//   lat?: number
-//   lng?: number
-//   mapsUri?: string
-//   _priceIdx?: number | null
-// }
-
-// const MILES_TO_METERS = 1609.34
-
-// // ---- utils ----
-// function toPriceIndex(priceLevel: any): number | null {
-//   if (priceLevel == null) return null
-//   if (typeof priceLevel === 'number') {
-//     const n = Math.max(0, Math.min(3, priceLevel))
-//     return Number.isFinite(n) ? n : null
-//   }
-//   const map: Record<string, number | null> = {
-//     PRICE_LEVEL_FREE: 0,
-//     PRICE_LEVEL_INEXPENSIVE: 0,
-//     PRICE_LEVEL_MODERATE: 1,
-//     PRICE_LEVEL_EXPENSIVE: 2,
-//     PRICE_LEVEL_VERY_EXPENSIVE: 3,
-//     PRICE_LEVEL_UNSPECIFIED: null,
-//   }
-//   return map[priceLevel] ?? null
-// }
-
-// function priceLabelFromIndex(idx: number | null): string {
-//   if (idx == null) return 'N/A'
-//   return '$'.repeat(idx + 1)
-// }
-
-// function haversineMiles(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
-//   const R = 3958.7613 // miles
-//   const dLat = ((b.lat - a.lat) * Math.PI) / 180
-//   const dLng = ((b.lng - a.lng) * Math.PI) / 180
-//   const lat1 = (a.lat * Math.PI) / 180
-//   const lat2 = (b.lat * Math.PI) / 180
-//   const s =
-//     Math.sin(dLat / 2) ** 2 +
-//     Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2
-//   return 2 * R * Math.asin(Math.sqrt(s))
-// }
-
-// // meters->degrees helpers
-// const degLat = (m: number) => m / 111_320
-// const degLng = (m: number, baseLat: number) =>
-//   m / (111_320 * Math.cos((baseLat * Math.PI) / 180))
-
-// export default function HostLocationPage() {
-//   // ---- price passed from Host page ----
-//   const params = useSearchParams()
-//   const priceIdxFromQuery = params.get('priceIdx')
-//   const [selectedPriceIdx, setSelectedPriceIdx] = useState<number | null>(null)
-
-//   // ---- map + radius ----
-//   const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(null)
-//   const [radiusMi, setRadiusMi] = useState<number>(3)
-
-//   // ---- fetch state ----
-//   const [loading, setLoading] = useState(false)
-//   const [error, setError] = useState<string | null>(null)
-//   const [results, setResults] = useState<Place[]>([])
-//   const seenIds = useRef<Set<string>>(new Set())
-
-//   // initialize price from query
-//   useEffect(() => {
-//     if (priceIdxFromQuery !== null) {
-//       const n = Number(priceIdxFromQuery)
-//       setSelectedPriceIdx(Number.isFinite(n) ? n : null)
-//     }
-//   }, [priceIdxFromQuery])
-
-//   // ---- tiling params (derived from radius) ----
-//   const radiusMeters = radiusMi * MILES_TO_METERS
-
-//   // Choose a tile size relative to the total radius for decent coverage/QPS
-//   // e.g., aim ~8–16 tiles for common radii
-//   const tileRadiusMeters = Math.max(800, Math.min(2500, radiusMeters / 3)) // ~0.5–1.5 mi
-//   const tileSpacingMeters = tileRadiusMeters * 1.5 // center-to-center spacing
-
-//   // Build tile centers around the picked point
-//   const tileCenters = useMemo(() => {
-//     if (!picked) return [] as Array<{ lat: number; lng: number }>
-//     const { lat, lng } = picked
-//     const centers: Array<{ lat: number; lng: number }> = []
-//     centers.push({ lat, lng }) // center tile
-
-//     const rings = Math.ceil(radiusMeters / tileSpacingMeters)
-//     for (let r = 1; r <= rings; r++) {
-//       const d = r * tileSpacingMeters
-//       const candidates: Array<[number, number]> = [
-//         [ d,  0], [ 0,  d], [-d,  0], [ 0, -d],
-//         [ d,  d], [-d,  d], [-d, -d], [ d, -d],
-//       ]
-//       for (const [dx, dy] of candidates) {
-//         centers.push({
-//           lat: lat + degLat(dy),
-//           lng: lng + degLng(dx, lat),
-//         })
-//       }
-//     }
-//     return centers
-//   }, [picked, radiusMeters, tileSpacingMeters])
-
-//   // ---- field mask for Places (keep lean but include location!) ----
-//   const FIELD_MASK = useMemo(
-//     () =>
-//       [
-//         'places.id',
-//         'places.displayName',
-//         'places.formattedAddress',
-//         'places.location',
-//         'places.rating',
-//         'places.userRatingCount',
-//         'places.priceLevel',
-//         'places.currentOpeningHours.openNow',
-//         'places.googleMapsUri',
-//       ].join(','),
-//     []
-//   )
-
-//   // One Nearby call for a given tile center
-//   async function fetchNearbyAtCenter(center: { lat: number; lng: number }) {
-//     const resp = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json',
-//         'X-Goog-Api-Key': process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY as string,
-//         'X-Goog-FieldMask': FIELD_MASK,
-//       },
-//       body: JSON.stringify({
-//         includedTypes: ['restaurant'],
-//         locationRestriction: {
-//           circle: {
-//             center: { latitude: center.lat, longitude: center.lng },
-//             radius: tileRadiusMeters,
-//           },
-//         },
-//         rankPreference: 'POPULARITY',
-//         maxResultCount: 20,
-//       }),
-//     })
-
-//     if (!resp.ok) {
-//       const text = await resp.text()
-//       throw new Error(`Places error ${resp.status}: ${text}`)
-//     }
-
-//     const data = await resp.json()
-//     // Dedupe by ID and normalize
-//     const batch = (data?.places ?? [])
-//       .filter((p: any) => {
-//         const id = p.id ?? p.googleMapsUri ?? p.displayName?.text
-//         if (!id) return false
-//         if (seenIds.current.has(id)) return false
-//         seenIds.current.add(id)
-//         return true
-//       })
-//       .map((p: any) => {
-//         const _priceIdx = toPriceIndex(p.priceLevel)
-//         return {
-//           id: p.id,
-//           name: p.displayName?.text,
-//           address: p.formattedAddress,
-//           rating: p.rating,
-//           priceLevel: p.priceLevel,
-//           openNow: p.currentOpeningHours?.openNow ?? undefined,
-//           lat: p.location?.latitude,
-//           lng: p.location?.longitude,
-//           mapsUri: p.googleMapsUri,
-//           _priceIdx,
-//         } as Place
-//       })
-
-//     // Price filter that EXCLUDES N/A when a specific price is selected
-//     return selectedPriceIdx === null
-//       ? batch
-//       : batch.filter((pl) => pl._priceIdx === selectedPriceIdx)
-//   }
-
-//   // Sweep all tiles (sequential, gentle on QPS)
-//   async function sweepTiles({ reset = true }: { reset?: boolean } = {}) {
-//     if (!picked) {
-//       setError('Click the map to set a center point.')
-//       return
-//     }
-
-//     try {
-//       setLoading(true)
-//       setError(null)
-//       if (reset) {
-//         setResults([])
-//         seenIds.current.clear()
-//       }
-
-//       const aggregated: Place[] = []
-//       for (let i = 0; i < tileCenters.length; i++) {
-//         const batch = await fetchNearbyAtCenter(tileCenters[i])
-//         aggregated.push(...batch)
-//         // small pause helps avoid bursts/429s
-//         await new Promise((r) => setTimeout(r, 250))
-//       }
-
-//       // Safety: keep only those truly within the selected radius
-//       const within = aggregated.filter((pl) =>
-//         pl.lat && pl.lng
-//           ? haversineMiles(picked, { lat: pl.lat, lng: pl.lng }) <= radiusMi
-//           : true
-//       )
-
-//       // Sort by distance ascending
-//       const sorted = within.sort((a, b) => {
-//         const da =
-//           a.lat && a.lng
-//             ? haversineMiles(picked, { lat: a.lat, lng: a.lng })
-//             : Number.POSITIVE_INFINITY
-//         const db =
-//           b.lat && b.lng
-//             ? haversineMiles(picked, { lat: b.lat, lng: b.lng })
-//             : Number.POSITIVE_INFINITY
-//         return da - db
-//       })
-
-//       setResults(sorted)
-//     } catch (e: any) {
-//       setError(e?.message || 'Failed to fetch')
-//     } finally {
-//       setLoading(false)
-//     }
-//   }
-
-//   return (
-//     <div className="min-h-screen bg-white text-gray-900 px-4 py-6">
-//       <div className="mx-auto max-w-5xl grid gap-4 md:grid-cols-3">
-//         {/* Map & radius ring */}
-//         <div className="md:col-span-2">
-//           <LeafletMap
-//             picked={picked}
-//             onPick={setPicked}
-//             radiusMeters={radiusMi * MILES_TO_METERS}
-//           />
-//         </div>
-
-//         {/* Controls + Results */}
-//         <div className="md:col-span-1 space-y-4">
-//           <div className="rounded-xl border p-4 shadow-sm">
-//             <h2 className="text-lg font-semibold">Search Settings</h2>
-
-//             {/* Price from Host (editable here) */}
-//             <div className="mt-3">
-//               <label className="text-sm text-gray-700">Price</label>
-//               <select
-//                 value={selectedPriceIdx ?? ''}
-//                 onChange={(e) =>
-//                   setSelectedPriceIdx(e.target.value ? Number(e.target.value) : null)
-//                 }
-//                 className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2"
-//               >
-//                 <option value="">All</option>
-//                 <option value="0">$ (Inexpensive)</option>
-//                 <option value="1">$$ (Moderate)</option>
-//                 <option value="2">$$$ (Expensive)</option>
-//                 <option value="3">$$$$ (Very Expensive)</option>
-//               </select>
-//             </div>
-
-//             <div className="mt-3">
-//               <label className="text-sm text-gray-700">Radius: {radiusMi} miles</label>
-//               <input
-//                 type="range"
-//                 min={1}
-//                 max={20}
-//                 step={1}
-//                 value={radiusMi}
-//                 onChange={(e) => setRadiusMi(Number(e.target.value))}
-//                 className="w-full"
-//               />
-//             </div>
-
-//             <button
-//               onClick={() => sweepTiles({ reset: true })}
-//               disabled={!picked || loading}
-//               className="mt-4 w-full rounded-md bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
-//             >
-//               {loading ? 'Searching…' : 'Find Restaurants'}
-//             </button>
-
-//             {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-//             {!picked && (
-//               <p className="mt-2 text-sm text-gray-600">
-//                 Tip: click the map to set the center.
-//               </p>
-//             )}
-//           </div>
-
-//           <div className="rounded-xl border p-4 shadow-sm">
-//             <h2 className="text-lg font-semibold">Results</h2>
-//             <ul className="mt-3 space-y-3">
-//               {results.map((r) => (
-//                 <li key={r.id || `${r.name}|${r.address}`} className="rounded-md border p-3">
-//                   <div className="flex items-center justify-between">
-//                     <div className="font-medium">{r.name}</div>
-//                     {typeof r.rating === 'number' && (
-//                       <div className="text-sm text-gray-600">⭐ {r.rating.toFixed(1)}</div>
-//                     )}
-//                   </div>
-//                   <div className="text-sm text-gray-600">{r.address}</div>
-//                   <div className="text-xs text-gray-500 mt-1">
-//                     Price: {priceLabelFromIndex(r._priceIdx)}{' '}
-//                     {r.openNow !== undefined ? (r.openNow ? '· Open now' : '· Closed') : ''}
-//                   </div>
-//                   {r.mapsUri && (
-//                     <a
-//                       href={r.mapsUri}
-//                       target="_blank"
-//                       rel="noopener noreferrer"
-//                       className="text-blue-600 text-sm underline"
-//                     >
-//                       View on Google Maps
-//                     </a>
-//                   )}
-//                 </li>
-//               ))}
-//               {!loading && results.length === 0 && (
-//                 <li className="text-sm text-gray-500">No results yet. Pick a point on the map and search.</li>
-//               )}
-//             </ul>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   )
-// }
 'use client';
 
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { supabase } from '../../../lib/supabaseClient';
 
 const LeafletMap = dynamic(() => import('./parts/LeafletMap'), { ssr: false });
 
@@ -374,19 +17,16 @@ type Place = {
   lat?: number;
   lng?: number;
   mapsUri?: string;
-  _priceIdx: number | null; // required to avoid undefined
+  website?: string;
+  _priceIdx: number | null;
 };
 
 const MILES_TO_METERS = 1609.34;
 const LAST_SEARCH_KEY = 'lastSearch_v1';
 
-// ---- utils ----
 function toPriceIndex(priceLevel: unknown): number | null {
   if (priceLevel == null) return null;
-  if (typeof priceLevel === 'number') {
-    const n = Math.max(0, Math.min(3, priceLevel));
-    return Number.isFinite(n) ? n : null;
-  }
+  if (typeof priceLevel === 'number') return Math.max(0, Math.min(3, priceLevel));
   const map: Record<string, number | null> = {
     PRICE_LEVEL_FREE: 0,
     PRICE_LEVEL_INEXPENSIVE: 0,
@@ -416,7 +56,6 @@ function haversineMiles(a: { lat: number; lng: number }, b: { lat: number; lng: 
 const degLat = (m: number) => m / 111_320;
 const degLng = (m: number, baseLat: number) => m / (111_320 * Math.cos((baseLat * Math.PI) / 180));
 
-/* ---------- Page export with Suspense ---------- */
 export default function HostLocationPage() {
   return (
     <Suspense fallback={<div className="p-6 text-sm text-gray-600">Loading search settings…</div>}>
@@ -425,26 +64,24 @@ export default function HostLocationPage() {
   );
 }
 
-/* ---------- Actual client content ---------- */
 function HostLocationInner() {
   const router = useRouter();
-
-  // ---- price passed from Host page ----
   const params = useSearchParams();
   const priceIdxFromQuery = params.get('priceIdx');
-  const [selectedPriceIdx, setSelectedPriceIdx] = useState<number | null>(null);
 
-  // ---- map + radius ----
+  const [selectedPriceIdx, setSelectedPriceIdx] = useState<number | null>(null);
   const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(null);
   const [radiusMi, setRadiusMi] = useState<number>(3);
+  const [expiryHours, setExpiryHours] = useState<number>(2);
+  const [mode, setMode] = useState<'solo' | 'group'>('solo');
 
-  // ---- fetch state ----
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<Place[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+
   const seenIds = useRef<Set<string>>(new Set());
 
-  // initialize price from query
   useEffect(() => {
     if (priceIdxFromQuery !== null) {
       const n = Number(priceIdxFromQuery);
@@ -452,19 +89,16 @@ function HostLocationInner() {
     }
   }, [priceIdxFromQuery]);
 
-  // ---- tiling params (derived from radius) ----
   const radiusMeters = radiusMi * MILES_TO_METERS;
-  const tileRadiusMeters = Math.max(800, Math.min(2500, radiusMeters / 3)); // ~0.5–1.5 mi
-  const tileSpacingMeters = tileRadiusMeters * 1.5; // center-to-center spacing
+  const tileRadiusMeters = Math.max(800, Math.min(2500, radiusMeters / 3));
+  const tileSpacingMeters = tileRadiusMeters * 1.5;
 
-  // Build tile centers around the picked point
   const tileCenters = useMemo(() => {
-    if (!picked) return [] as Array<{ lat: number; lng: number }>;
+    if (!picked) return [];
     const { lat, lng } = picked;
-    const centers: Array<{ lat: number; lng: number }> = [];
-    centers.push({ lat, lng }); // center tile
-
+    const centers: Array<{ lat: number; lng: number }> = [{ lat, lng }];
     const rings = Math.ceil(radiusMeters / tileSpacingMeters);
+
     for (let r = 1; r <= rings; r++) {
       const d = r * tileSpacingMeters;
       const candidates: Array<[number, number]> = [
@@ -478,39 +112,41 @@ function HostLocationInner() {
         [d, -d],
       ];
       for (const [dx, dy] of candidates) {
-        centers.push({
-          lat: lat + degLat(dy),
-          lng: lng + degLng(dx, lat),
-        });
+        centers.push({ lat: lat + degLat(dy), lng: lng + degLng(dx, lat) });
       }
     }
     return centers;
   }, [picked, radiusMeters, tileSpacingMeters]);
 
-  const FIELD_MASK = useMemo(
-    () =>
-      [
-        'places.id',
-        'places.displayName',
-        'places.formattedAddress',
-        'places.location',
-        'places.rating',
-        'places.userRatingCount',
-        'places.priceLevel',
-        'places.currentOpeningHours.openNow',
-        'places.googleMapsUri',
-      ].join(','),
-    []
-  );
+  async function fetchPlaceDetails(placeId: string) {
+    try {
+      const resp = await fetch(
+        `https://places.googleapis.com/v1/places/${placeId}?fields=website&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}`
+      );
+      if (!resp.ok) return undefined;
+      const data = await resp.json();
+      return data.website;
+    } catch {
+      return undefined;
+    }
+  }
 
-  // One Nearby call for a given tile center
   async function fetchNearbyAtCenter(center: { lat: number; lng: number }): Promise<Place[]> {
     const resp = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY as string,
-        'X-Goog-FieldMask': FIELD_MASK,
+        'X-Goog-FieldMask': [
+          'places.id',
+          'places.displayName',
+          'places.formattedAddress',
+          'places.location',
+          'places.rating',
+          'places.priceLevel',
+          'places.currentOpeningHours.openNow',
+          'places.googleMapsUri',
+        ].join(','),
       },
       body: JSON.stringify({
         includedTypes: ['restaurant'],
@@ -525,39 +161,34 @@ function HostLocationInner() {
       }),
     });
 
-    if (!resp.ok) {
-      const text = await resp.text();
-      throw new Error(`Places error ${resp.status}: ${text}`);
+    if (!resp.ok) throw new Error(`Places error ${resp.status}`);
+    const data = await resp.json();
+
+    const batch: Place[] = [];
+    for (const p of data?.places ?? []) {
+      const id = p.id ?? p.googleMapsUri ?? p.displayName?.text;
+      if (!id || seenIds.current.has(id)) continue;
+      seenIds.current.add(id);
+
+      const website = await fetchPlaceDetails(p.id);
+
+      batch.push({
+        id,
+        name: p.displayName?.text,
+        address: p.formattedAddress,
+        rating: p.rating,
+        priceLevel: p.priceLevel,
+        openNow: p.currentOpeningHours?.openNow ?? undefined,
+        lat: p.location?.latitude,
+        lng: p.location?.longitude,
+        mapsUri: p.googleMapsUri,
+        website,
+        _priceIdx: toPriceIndex(p.priceLevel),
+      });
     }
 
-    const data = await resp.json();
-    const batch: Place[] = (data?.places ?? [])
-      .filter((p: any) => {
-        const id = p.id ?? p.googleMapsUri ?? p.displayName?.text;
-        if (!id) return false;
-        if (seenIds.current.has(id)) return false;
-        seenIds.current.add(id);
-        return true;
-      })
-      .map((p: any): Place => {
-        const _priceIdx = toPriceIndex(p.priceLevel);
-        return {
-          id: p.id,
-          name: p.displayName?.text,
-          address: p.formattedAddress,
-          rating: p.rating,
-          priceLevel: p.priceLevel,
-          openNow: p.currentOpeningHours?.openNow ?? undefined,
-          lat: p.location?.latitude,
-          lng: p.location?.longitude,
-          mapsUri: p.googleMapsUri,
-          _priceIdx,
-        };
-      });
-
     if (selectedPriceIdx == null) return batch;
-    const target = selectedPriceIdx;
-    return batch.filter((pl: Place) => pl._priceIdx === target);
+    return batch.filter((pl) => pl._priceIdx === selectedPriceIdx);
   }
 
   function persistLastSearch(currentResults: Place[]) {
@@ -571,12 +202,9 @@ function HostLocationInner() {
         savedAt: Date.now(),
       };
       sessionStorage.setItem(LAST_SEARCH_KEY, JSON.stringify(payload));
-    } catch {
-      // ignore storage failures
-    }
+    } catch {}
   }
 
-  // Sweep all tiles (sequential, gentle on QPS)
   async function sweepTiles({ reset = true }: { reset?: boolean } = {}) {
     if (!picked) {
       setError('Click the map to set a center point.');
@@ -586,6 +214,8 @@ function HostLocationInner() {
     try {
       setLoading(true);
       setError(null);
+      setHasSearched(true);
+
       if (reset) {
         setResults([]);
         seenIds.current.clear();
@@ -595,7 +225,7 @@ function HostLocationInner() {
       for (let i = 0; i < tileCenters.length; i++) {
         const batch = await fetchNearbyAtCenter(tileCenters[i]);
         aggregated.push(...batch);
-        await new Promise((r) => setTimeout(r, 250)); // gentle delay
+        await new Promise((r) => setTimeout(r, 250));
       }
 
       const within = aggregated.filter((pl) =>
@@ -623,30 +253,120 @@ function HostLocationInner() {
     }
   }
 
-  function goToSwipe() {
-    if (!picked) {
-      setError('Pick a point on the map first.');
-      return;
+  const generateSessionCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    return Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join(
+      ''
+    );
+  };
+
+  // --- swipe and confirm functions (unchanged from previous version) ---
+  async function goToSwipe() {
+    if (!picked || results.length === 0)
+      return setError(!picked ? 'Pick a point first' : 'Find restaurants first');
+    setError(null);
+
+    let session: any = null;
+    let attempts = 0;
+    while (!session && attempts < 5) {
+      const code = generateSessionCode();
+      const { data, error } = await supabase
+        .from('sessions')
+        .insert({
+          code,
+          status: 'open',
+          latitude: picked.lat,
+          longitude: picked.lng,
+          radius: radiusMi,
+          price_range: selectedPriceIdx ?? null,
+          mode: 'solo',
+        })
+        .select('id, code')
+        .single();
+
+      if (error) {
+        if (error.code === '23505') attempts++;
+        else return setError('Failed to create session: ' + error.message);
+      } else session = data;
     }
-    if (results.length === 0) {
-      setError('Find restaurants first, then begin swiping.');
-      return;
+
+    if (!session) return setError('Failed to generate unique session code');
+
+    const insertRestaurantsSolo = results.map((r) => ({
+      name: r.name,
+      address: r.address,
+      latitude: r.lat,
+      longitude: r.lng,
+      price_level: r._priceIdx,
+      rating: r.rating,
+      google_place_id: r.id,
+      session_id: session.id,
+      maps_uri: r.mapsUri ?? null,
+    }));
+
+    const { error: restError } = await supabase.from('restaurants').insert(insertRestaurantsSolo);
+    if (restError) return setError('Failed to save restaurants: ' + restError.message);
+
+    router.push(`/host/swipe?session=${session.code}`);
+  }
+
+  async function goToConfirmPage() {
+    if (!picked || results.length === 0)
+      return setError(!picked ? 'Pick a point first' : 'Find restaurants first');
+    setError(null);
+
+    let session: any = null;
+    let attempts = 0;
+
+    while (!session && attempts < 5) {
+      const code = generateSessionCode();
+      const { data, error } = await supabase
+        .from('sessions')
+        .insert({
+          code,
+          status: 'open',
+          latitude: picked.lat,
+          longitude: picked.lng,
+          radius: radiusMi,
+          price_range: selectedPriceIdx ?? null,
+          expiry_hours: expiryHours,
+          mode: 'group',
+        })
+        .select('id, code, ends_at')
+        .single();
+
+      if (error) {
+        if (error.code === '23505') attempts++;
+        else return setError('Failed to create session: ' + error.message);
+      } else session = data;
     }
-    persistLastSearch(results);
-    const qs = new URLSearchParams({
-      lat: String(picked.lat),
-      lng: String(picked.lng),
-      radiusMi: String(radiusMi),
-      priceIdx: selectedPriceIdx === null ? '' : String(selectedPriceIdx),
-    }).toString();
-    router.push(`/host/swipe?${qs}`);
+
+    if (!session) return setError('Failed to generate unique session code');
+
+    const insertRestaurantsGroup = results.map((r) => ({
+      name: r.name,
+      address: r.address,
+      latitude: r.lat,
+      longitude: r.lng,
+      price_level: r._priceIdx,
+      rating: r.rating,
+      google_place_id: r.id,
+      session_id: session.id,
+      maps_uri: r.mapsUri ?? null,
+    }));
+
+    const { error: restError } = await supabase.from('restaurants').insert(insertRestaurantsGroup);
+    if (restError) return setError('Failed to save restaurants: ' + restError.message);
+
+    router.push(
+      `/host/confirm?session=${encodeURIComponent(session.code)}&ends_at=${encodeURIComponent(session.ends_at)}`
+    );
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 px-4 py-6">
-      <div className="mx-auto max-w-5xl grid gap-4 md:grid-cols-3">
-        {/* Map & radius ring */}
-        <div className="md:col-span-2">
+    <div className="min-h-screen bg-gray-50 text-gray-900 px-4 py-6">
+      <div className="mx-auto max-w-6xl grid gap-6 md:grid-cols-3">
+        <div className="md:col-span-2 rounded-xl overflow-hidden shadow-md">
           <LeafletMap
             picked={picked}
             onPick={setPicked}
@@ -654,20 +374,38 @@ function HostLocationInner() {
           />
         </div>
 
-        {/* Controls + Results */}
-        <div className="md:col-span-1 space-y-4">
-          <div className="rounded-xl border p-4 shadow-sm">
-            <h2 className="text-lg font-semibold">Search Settings</h2>
+        <div className="md:col-span-1 space-y-6">
+          {/* Search Settings */}
+          <div className="rounded-xl bg-white border shadow-md p-5 space-y-4">
+            <h2 className="text-xl font-semibold">Search Settings</h2>
 
-            {/* Price from Host (editable here) */}
-            <div className="mt-3">
-              <label className="text-sm text-gray-700">Price</label>
+            <div className="flex gap-2">
+              <button
+                className={`flex-1 py-2 rounded-md font-medium ${
+                  mode === 'solo' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+                onClick={() => setMode('solo')}
+              >
+                Solo
+              </button>
+              <button
+                className={`flex-1 py-2 rounded-md font-medium ${
+                  mode === 'group' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+                onClick={() => setMode('group')}
+              >
+                Group
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-700">Price</label>
               <select
                 value={selectedPriceIdx ?? ''}
                 onChange={(e) =>
                   setSelectedPriceIdx(e.target.value ? Number(e.target.value) : null)
                 }
-                className="mt-1 w-full rounded-md border border-gray-300 px-2 py-2"
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
               >
                 <option value="">All</option>
                 <option value="0">$ (Inexpensive)</option>
@@ -677,8 +415,8 @@ function HostLocationInner() {
               </select>
             </div>
 
-            <div className="mt-3">
-              <label className="text-sm text-gray-700">Radius: {radiusMi} miles</label>
+            <div>
+              <label className="block text-sm text-gray-700">Radius: {radiusMi} miles</label>
               <input
                 type="range"
                 min={1}
@@ -686,47 +424,74 @@ function HostLocationInner() {
                 step={1}
                 value={radiusMi}
                 onChange={(e) => setRadiusMi(Number(e.target.value))}
-                className="w-full"
+                className="w-full mt-1"
               />
             </div>
 
             <button
               onClick={() => sweepTiles({ reset: true })}
               disabled={!picked || loading}
-              className="mt-4 w-full rounded-md bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
+              className="w-full mt-3 py-2 rounded-md bg-blue-600 text-white disabled:opacity-50"
             >
               {loading ? 'Searching…' : 'Find Restaurants'}
             </button>
 
-            <button
-              onClick={goToSwipe}
-              disabled={!picked || results.length === 0}
-              className="mt-2 w-full rounded-md bg-green-600 px-4 py-2 text-white disabled:opacity-50"
-            >
-              Begin swiping
-            </button>
+            {mode === 'solo' && (
+              <button
+                onClick={goToSwipe}
+                disabled={!picked || results.length === 0}
+                className="w-full mt-2 py-2 rounded-md bg-green-600 text-white disabled:opacity-50"
+              >
+                Start Swiping
+              </button>
+            )}
 
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+            {mode === 'group' && (
+              <>
+                <div>
+                  <label className="block text-sm text-gray-700">Session Expiration (hours)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={48}
+                    step={1}
+                    value={expiryHours}
+                    onChange={(e) => setExpiryHours(Number(e.target.value))}
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                  />
+                </div>
+                <button
+                  onClick={goToConfirmPage}
+                  disabled={!picked || results.length === 0}
+                  className="w-full mt-2 py-2 rounded-md bg-purple-600 text-white disabled:opacity-50"
+                >
+                  Create Session
+                </button>
+              </>
+            )}
+
+            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
             {!picked && (
-              <p className="mt-2 text-sm text-gray-600">Tip: click the map to set the center.</p>
+              <p className="text-sm text-gray-500 mt-2">Tip: click the map to set the center.</p>
             )}
           </div>
 
-          <div className="rounded-xl border p-4 shadow-sm">
-            <h2 className="text-lg font-semibold">Results</h2>
+          {/* Results */}
+          <div className="rounded-xl bg-white border shadow-md p-5">
+            <h2 className="text-xl font-semibold">Results</h2>
             <ul className="mt-3 space-y-3">
               {results.map((r) => (
-                <li key={r.id || `${r.name}|${r.address}`} className="rounded-md border p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium">{r.name}</div>
+                <li key={r.id} className="rounded-md border p-3 space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">{r.name}</span>
                     {typeof r.rating === 'number' && (
-                      <div className="text-sm text-gray-600">⭐ {r.rating.toFixed(1)}</div>
+                      <span className="text-sm text-gray-600">⭐ {r.rating.toFixed(1)}</span>
                     )}
                   </div>
                   <div className="text-sm text-gray-600">{r.address}</div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Price: {priceLabelFromIndex(r._priceIdx)}{' '}
-                    {r.openNow !== undefined ? (r.openNow ? '· Open now' : '· Closed') : ''}
+                  <div className="text-xs text-gray-500">
+                    Price: {priceLabelFromIndex(r._priceIdx)}
+                    {r.openNow !== undefined ? (r.openNow ? ' · Open now' : ' · Closed') : ''}
                   </div>
                   {r.mapsUri && (
                     <a
@@ -738,11 +503,27 @@ function HostLocationInner() {
                       View on Google Maps
                     </a>
                   )}
+                  {r.website && (
+                    <a
+                      href={r.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 text-sm underline block"
+                    >
+                      Visit Website
+                    </a>
+                  )}
                 </li>
               ))}
-              {!loading && results.length === 0 && (
+
+              {!loading && results.length === 0 && hasSearched && (
+                <li className="text-sm text-red-600">
+                  No restaurants found that match your search criteria.
+                </li>
+              )}
+              {!loading && results.length === 0 && !hasSearched && (
                 <li className="text-sm text-gray-500">
-                  No results yet. Pick a point on the map and search.
+                  Pick a point on the map and click "Find Restaurants" to begin.
                 </li>
               )}
             </ul>
