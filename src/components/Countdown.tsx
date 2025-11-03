@@ -41,4 +41,3 @@ export default function Countdown({ expiresAt }: Props) {
 
   return <span className="font-medium text-gray-900">{remaining}</span>;
 }
-

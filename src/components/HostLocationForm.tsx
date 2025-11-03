@@ -82,4 +82,3 @@ export default function HostLocationForm({ price }: Props) {
     </main>
   );
 }
-

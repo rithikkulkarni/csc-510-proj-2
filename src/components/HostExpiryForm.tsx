@@ -124,4 +124,3 @@ export default function HostExpiryForm({ price, lat, lng, radiusMiles }: Props) 
     </main>
   );
 }
-
