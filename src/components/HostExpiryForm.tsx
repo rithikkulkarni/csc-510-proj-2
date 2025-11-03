@@ -6,20 +6,43 @@ import { BackButton } from '@/components/BackButton';
 import React from 'react';
 
 type Props = {
+  /** Price filter key (e.g., 'ALL', '1', '2', '3', '4') */
   price: string;
+  /** Latitude of the host-selected location */
   lat: number;
+  /** Longitude of the host-selected location */
   lng: number;
+  /** Search radius in miles */
   radiusMiles: number;
 };
 
+/**
+ * HostExpiryForm
+ *
+ * Creates a host session with a user-selected validity window (in hours)
+ * and navigates to a success page with the session code and expiration.
+ *
+ * UX:
+ * - Hours input (1–24) with clamped numeric entry
+ * - Create button disabled until required inputs are valid
+ * - Shows a lightweight error message on failure
+ *
+ * @example
+ * <HostExpiryForm price="ALL" lat={35.78} lng={-78.64} radiusMiles={5} />
+ */
 export default function HostExpiryForm({ price, lat, lng, radiusMiles }: Props) {
   const router = useRouter();
+
+  // Session expiry (hours), loading/error UI state
   const [hours, setHours] = useState(2);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Disable if required inputs are missing/invalid
+  // Note: this treats 0 as falsy; if [0,0] were ever valid, adjust this check.
   const disabled = !price || !lat || !lng || hours <= 0;
 
+  // POST to /api/sessions, parse response, route to /host/success
   const handleCreate = async () => {
     if (disabled) return;
 
@@ -33,6 +56,7 @@ export default function HostExpiryForm({ price, lat, lng, radiusMiles }: Props) 
         body: JSON.stringify({ price, location: { lat, lng }, hours, radiusMiles }),
       });
 
+      // Defensive parse to surface server-side errors clearly
       const text = await res.text();
       let data: any;
       try {
@@ -43,6 +67,7 @@ export default function HostExpiryForm({ price, lat, lng, radiusMiles }: Props) 
 
       if (!res.ok) throw new Error(data?.error || 'Failed to create session');
 
+      // Fallback expiration if API omits it
       const expiresAt =
         data.expiresAt ?? new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 
@@ -74,7 +99,7 @@ export default function HostExpiryForm({ price, lat, lng, radiusMiles }: Props) 
             value={hours}
             onChange={(e) => {
               let val = parseInt(e.target.value || '1', 10);
-              val = Math.max(1, Math.min(val, 24));
+              val = Math.max(1, Math.min(val, 24)); // clamp 1–24
               setHours(val);
             }}
           />
@@ -99,3 +124,4 @@ export default function HostExpiryForm({ price, lat, lng, radiusMiles }: Props) 
     </main>
   );
 }
+
