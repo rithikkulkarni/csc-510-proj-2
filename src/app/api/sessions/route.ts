@@ -6,15 +6,40 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceRoleKey) {
-  // We intentionally do not throw here since server may run without env in some test contexts,
-  // but we will return proper errors when attempting to use the client.
+  // Intentionally not throwing (tests may run without env); endpoint returns 500 at call time instead.
 }
 
 const serverSupabase = createClient(supabaseUrl || '', supabaseServiceRoleKey || '', {
-  // Force admin level on server
+  // Admin-level server client; never persist sessions on the server.
   auth: { persistSession: false },
 });
 
+/**
+ * POST /api/sessions
+ *
+ * Creates a new session row and returns its code and DB-computed fields.
+ * Accepts either `{ location: { lat, lng } }` or top-level `lat`/`lng`.
+ * Price may be provided as `price_range` (1..4) or legacy formats (e.g., "$$", "moderate", "10-20").
+ *
+ * Request body (partial):
+ * - price_range?: 1|2|3|4
+ * - price?: string | number  // legacy; mapped to 1..4 by `mapPriceToRange`
+ * - location?: { lat: number; lng: number }
+ * - lat?: number
+ * - lng?: number
+ * - radiusMiles?: number
+ * - hours: number            // required; session validity window in hours
+ *
+ * Query:
+ * - ?debug=1  // returns diagnostic info about inserted row (useful for trigger debugging)
+ *
+ * Response: 201
+ * { code, id, session }     // session includes DB-populated fields (e.g., ends_at via trigger)
+ *
+ * Errors:
+ * - 400 missing/invalid inputs
+ * - 500 env/config/insert failures
+ */
 export async function POST(request: NextRequest) {
   try {
     if (!supabaseUrl || !supabaseServiceRoleKey) {
@@ -32,12 +57,10 @@ export async function POST(request: NextRequest) {
       hours,
     } = body || {};
 
-    // detect debug flag on the request URL (?debug=1)
+    // Detect debug flag on the request URL (?debug=1)
     const isDebug = request.nextUrl?.searchParams?.get?.('debug') === '1';
 
-    // Accept either { location: { lat, lng } } or top-level lat and lng
-
-    // Determine price_range (1..4). Accept either explicit price_range or legacy price string like "0-10".
+    // Determine price_range (1..4) from various accepted formats.
     function mapPriceToRange(p: any): number | null {
       if (p == null) return null;
       const n = Number(p);
@@ -45,13 +68,13 @@ export async function POST(request: NextRequest) {
 
       const s = String(p).trim();
 
-      // Accept dollar-sign style like "$", "$$", "$$$", "$$$$"
+      // Dollar-sign style ("$", "$$", "$$$", "$$$$")
       if (/^\$+$/.test(s)) {
         const count = Math.min(Math.max(s.length, 1), 4);
         return count;
       }
 
-      // Accept human-readable labels (Google-like)
+      // Human-readable labels
       const lowered = s.toLowerCase();
       if (lowered === 'inexpensive') return 1;
       if (lowered === 'moderately expensive' || lowered === 'moderate' || lowered === 'moderately')
@@ -59,7 +82,7 @@ export async function POST(request: NextRequest) {
       if (lowered === 'expensive') return 3;
       if (lowered === 'very expensive' || lowered === 'very') return 4;
 
-      // Keep legacy numeric range strings mapping for backwards compatibility
+      // Legacy numeric buckets (back-compat)
       switch (s) {
         case '0-10':
         case '$0-10':
@@ -78,11 +101,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Accept either location.lat/lng or top-level lat/lng
     const lat = location ? Number(location.lat) : Number(latRaw);
     const lng = location ? Number(location.lng) : Number(lngRaw);
 
     const price_range = mapPriceToRange(priceRangeRaw ?? price);
 
+    // Basic validation; note: treats 0 as invalid for lat/lng (adjust if needed).
     if (
       price_range == null ||
       Number.isNaN(lat) ||
@@ -96,29 +121,24 @@ export async function POST(request: NextRequest) {
     }
     const radius = Number(radiusMiles || 0);
 
-    // Generate code server-side using simple alphabet approach
+    // 4-letter uppercase session code
     const code = generateCode(4);
 
-    // Insert the session with created_at being set by the DB. We'll compute ends_at using SQL so
-    // it is based on the same timestamp the DB uses for created_at to avoid clock skew.
-    // Note: PostgreSQL interval syntax supports (hours || ' hours')::interval
-
+    // Insert; DB trigger computes ends_at from created_at + expiry_hours atomically.
     const insertPayload: any = {
       code,
-      price_range: price_range,
+      price_range,
       latitude: lat,
       longitude: lng,
-      radius: radius,
+      radius,
       expiry_hours: hours,
-      // keep ends_at null for now, we'll update it in a follow-up SQL statement
+      // ends_at left null; trigger fills it.
     };
 
-    // Rely on DB trigger (expiry_hours -> ends_at) to compute ends_at atomically.
-    // Request the full inserted row so the trigger-populated `ends_at` is returned.
     const { data: insertedRow, error: insertErr } = await serverSupabase
       .from('sessions')
       .insert(insertPayload)
-      .select('*')
+      .select('*') // return trigger-populated fields
       .single();
 
     if (insertErr || !insertedRow) {
@@ -129,7 +149,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (isDebug) {
-      // return diagnostics to help debug why ends_at might be null
       const debugInfo = {
         insertedRow,
         has_expiry_hours:
@@ -149,6 +168,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Simple server-side code generator (uppercase letters)
+/** Generates a random A–Z code of length `len` using crypto-grade randomness. */
 function generateCode(len = 4) {
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let out = '';
@@ -159,6 +179,7 @@ function generateCode(len = 4) {
   return out;
 }
 
+/** Returns `len` cryptographically secure random bytes (Node or Web Crypto). */
 function cryptoRandomBytes(len: number) {
   if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
     const arr = new Uint8Array(len);
@@ -169,3 +190,4 @@ function cryptoRandomBytes(len: number) {
   const buf = require('crypto').randomBytes(len);
   return Uint8Array.from(buf);
 }
+
