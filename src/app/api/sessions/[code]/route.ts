@@ -16,10 +16,7 @@ import { supabase } from '@/lib/supabaseClient';
  * - 400 missing code
  * - 500 session lookup failure
  */
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ code: string }> }
-) {
+export async function GET(request: NextRequest, context: { params: Promise<{ code: string }> }) {
   try {
     const { code } = await context.params;
 

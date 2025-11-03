@@ -190,4 +190,3 @@ function cryptoRandomBytes(len: number) {
   const buf = require('crypto').randomBytes(len);
   return Uint8Array.from(buf);
 }
-
