@@ -1,50 +1,38 @@
 // src/app/host/page.test.tsx
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import Host from './page';
-import { useRouter } from 'next/navigation';
+import HostPageRedirect from './page';
 
-// --- Mocks ---
+// Mock next/navigation's useRouter
+const replaceMock = vi.fn();
 vi.mock('next/navigation', () => ({
-  useRouter: vi.fn(),
+  useRouter: () => ({
+    replace: replaceMock,
+    push: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: vi.fn(),
+  }),
 }));
 
-vi.mock('@/components/BackButton', () => ({
-  BackButton: () => <button>Back</button>,
-}));
-
-describe('Host Page', () => {
+describe('Host Page Redirect', () => {
   beforeEach(() => {
-    vi.mocked(useRouter).mockReturnValue({
-      push: vi.fn(),
-      back: vi.fn(),
-      forward: vi.fn(),
-      refresh: vi.fn(),
-      replace: vi.fn(),
-      prefetch: vi.fn(),
-    } as any);
+    replaceMock.mockReset();
   });
 
-  it('renders all price range buttons', () => {
-    render(<Host />);
-
-    const buttons = [
-      '$ (Inexpensive)',
-      '$$ (Moderate)',
-      '$$$ (Expensive)',
-      '$$$$ (Very Expensive)',
-    ];
-
-    for (const label of buttons) {
-      expect(
-        screen.getByRole('button', { name: `Select price range ${label}` })
-      ).toBeInTheDocument();
-    }
+  it('renders the redirect message', () => {
+    render(<HostPageRedirect />);
+    expect(screen.getByText(/redirecting to location selection/i)).toBeInTheDocument();
   });
 
-  it('renders the back button', () => {
-    render(<Host />);
-    expect(screen.getByText('Back')).toBeInTheDocument();
+  it('immediately redirects to /host/location', async () => {
+    render(<HostPageRedirect />);
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith('/host/location');
+    });
+    expect(replaceMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -4,6 +4,7 @@ import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
+import { BackButton } from '@/components/BackButton';
 
 const LeafletMap = dynamic(() => import('./parts/LeafletMap'), { ssr: false });
 
@@ -81,6 +82,10 @@ function HostLocationInner() {
   const [hasSearched, setHasSearched] = useState(false);
 
   const seenIds = useRef<Set<string>>(new Set());
+
+  const isFindEnabled = !!picked && !loading;
+  const canSwipe = !!picked && results.length > 0;
+  const canCreate = canSwipe; // same condition
 
   useEffect(() => {
     if (priceIdxFromQuery !== null) {
@@ -366,6 +371,7 @@ function HostLocationInner() {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 px-4 py-6">
       <div className="mx-auto max-w-6xl grid gap-6 md:grid-cols-3">
+        <BackButton />
         <div className="md:col-span-2 rounded-xl overflow-hidden shadow-md">
           <LeafletMap
             picked={picked}
@@ -382,7 +388,9 @@ function HostLocationInner() {
             <div className="flex gap-2">
               <button
                 className={`flex-1 py-2 rounded-md font-medium ${
-                  mode === 'solo' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
+                  mode === 'solo'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-200 text-gray-700 cursor-pointer transition transform duration-150 hover:scale-105'
                 }`}
                 onClick={() => setMode('solo')}
               >
@@ -390,7 +398,9 @@ function HostLocationInner() {
               </button>
               <button
                 className={`flex-1 py-2 rounded-md font-medium ${
-                  mode === 'group' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'
+                  mode === 'group'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-200 text-gray-700 cursor-pointer transition transform duration-150 hover:scale-105'
                 }`}
                 onClick={() => setMode('group')}
               >
@@ -405,7 +415,7 @@ function HostLocationInner() {
                 onChange={(e) =>
                   setSelectedPriceIdx(e.target.value ? Number(e.target.value) : null)
                 }
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 cursor-pointer"
               >
                 <option value="">All</option>
                 <option value="0">$ (Inexpensive)</option>
@@ -424,14 +434,16 @@ function HostLocationInner() {
                 step={1}
                 value={radiusMi}
                 onChange={(e) => setRadiusMi(Number(e.target.value))}
-                className="w-full mt-1"
+                className="w-full mt-1 cursor-pointer"
               />
             </div>
 
             <button
               onClick={() => sweepTiles({ reset: true })}
-              disabled={!picked || loading}
-              className="w-full mt-3 py-2 rounded-md bg-blue-600 text-white disabled:opacity-50"
+              disabled={!isFindEnabled}
+              className={
+                'w-full mt-3 py-2 rounded-md bg-blue-600 text-white disabled:opacity-50 ${isFindEnabled ? cursor-pointer}'
+              }
             >
               {loading ? 'Searching…' : 'Find Restaurants'}
             </button>
@@ -439,8 +451,10 @@ function HostLocationInner() {
             {mode === 'solo' && (
               <button
                 onClick={goToSwipe}
-                disabled={!picked || results.length === 0}
-                className="w-full mt-2 py-2 rounded-md bg-green-600 text-white disabled:opacity-50"
+                disabled={!canSwipe}
+                className={
+                  'w-full mt-2 py-2 rounded-md bg-green-600 text-white disabled:opacity-50 ${canSwipe ? cursor-pointer}'
+                }
               >
                 Start Swiping
               </button>
@@ -462,8 +476,10 @@ function HostLocationInner() {
                 </div>
                 <button
                   onClick={goToConfirmPage}
-                  disabled={!picked || results.length === 0}
-                  className="w-full mt-2 py-2 rounded-md bg-purple-600 text-white disabled:opacity-50"
+                  disabled={!canCreate}
+                  className={
+                    'w-full mt-2 py-2 rounded-md bg-purple-600 text-white disabled:opacity-50 ${canCreate ? cursor-pointer}'
+                  }
                 >
                   Create Session
                 </button>
