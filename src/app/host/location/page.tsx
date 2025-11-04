@@ -19,12 +19,14 @@ type Place = {
   lng?: number;
   mapsUri?: string;
   website?: string;
+  /** Normalized 0–3 price index derived from API price level */
   _priceIdx: number | null;
 };
 
 const MILES_TO_METERS = 1609.34;
 const LAST_SEARCH_KEY = 'lastSearch_v1';
 
+/** Normalize Google Places `priceLevel` -> 0..3 or null */
 function toPriceIndex(priceLevel: unknown): number | null {
   if (priceLevel == null) return null;
   if (typeof priceLevel === 'number') return Math.max(0, Math.min(3, priceLevel));
@@ -39,11 +41,13 @@ function toPriceIndex(priceLevel: unknown): number | null {
   return map[String(priceLevel)] ?? null;
 }
 
+/** Format price index for UI */
 function priceLabelFromIndex(idx: number | null): string {
   if (idx == null) return 'N/A';
   return '$'.repeat(idx + 1);
 }
 
+/** Great-circle distance (miles) */
 function haversineMiles(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 3958.7613; // miles
   const dLat = ((b.lat - a.lat) * Math.PI) / 180;
@@ -54,9 +58,16 @@ function haversineMiles(a: { lat: number; lng: number }, b: { lat: number; lng: 
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
+// Meter -> degree helpers (approximate)
 const degLat = (m: number) => m / 111_320;
 const degLng = (m: number, baseLat: number) => m / (111_320 * Math.cos((baseLat * Math.PI) / 180));
 
+/**
+ * HostLocationPage
+ *
+ * Top-level suspense wrapper for the location-selection/search flow.
+ * Shows a lightweight fallback while `HostLocationInner` reads the query string.
+ */
 export default function HostLocationPage() {
   return (
     <Suspense fallback={<div className="p-6 text-sm text-gray-600">Loading search settings…</div>}>
@@ -65,6 +76,19 @@ export default function HostLocationPage() {
   );
 }
 
+/**
+ * HostLocationInner
+ *
+ * Allows a host to:
+ * - pick a map center and radius,
+ * - fetch nearby restaurants via Google Places in a tiled sweep,
+ * - filter by price,
+ * - then either start a solo swipe session or create a group session with expiration.
+ *
+ * State:
+ * - `picked`, `radiusMi`, `selectedPriceIdx`, `expiryHours`, `mode`
+ * - loading/error UX and fetched `results`
+ */
 function HostLocationInner() {
   const router = useRouter();
   const params = useSearchParams();
@@ -81,12 +105,14 @@ function HostLocationInner() {
   const [results, setResults] = useState<Place[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
 
+  // De-duplicate place IDs across tile sweeps
   const seenIds = useRef<Set<string>>(new Set());
 
   const isFindEnabled = !!picked && !loading;
   const canSwipe = !!picked && results.length > 0;
-  const canCreate = canSwipe; // same condition
+  const canCreate = canSwipe;
 
+  // Initialize price filter from query (?priceIdx=)
   useEffect(() => {
     if (priceIdxFromQuery !== null) {
       const n = Number(priceIdxFromQuery);
@@ -94,10 +120,12 @@ function HostLocationInner() {
     }
   }, [priceIdxFromQuery]);
 
+  // Sweep parameters
   const radiusMeters = radiusMi * MILES_TO_METERS;
   const tileRadiusMeters = Math.max(800, Math.min(2500, radiusMeters / 3));
   const tileSpacingMeters = tileRadiusMeters * 1.5;
 
+  // Compute a set of tile centers covering the circular search area
   const tileCenters = useMemo(() => {
     if (!picked) return [];
     const { lat, lng } = picked;
@@ -123,6 +151,7 @@ function HostLocationInner() {
     return centers;
   }, [picked, radiusMeters, tileSpacingMeters]);
 
+  /** Fetch website detail for a given place (best-effort) */
   async function fetchPlaceDetails(placeId: string) {
     try {
       const resp = await fetch(
@@ -136,6 +165,7 @@ function HostLocationInner() {
     }
   }
 
+  /** Query Google Places Nearby for a single tile center; filters by price if selected */
   async function fetchNearbyAtCenter(center: { lat: number; lng: number }): Promise<Place[]> {
     const resp = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
       method: 'POST',
@@ -196,6 +226,7 @@ function HostLocationInner() {
     return batch.filter((pl) => pl._priceIdx === selectedPriceIdx);
   }
 
+  /** Persist last successful search in sessionStorage (non-critical) */
   function persistLastSearch(currentResults: Place[]) {
     if (!picked) return;
     try {
@@ -210,6 +241,7 @@ function HostLocationInner() {
     } catch {}
   }
 
+  /** Sweep all tile centers, aggregate and sort by distance from `picked` */
   async function sweepTiles({ reset = true }: { reset?: boolean } = {}) {
     if (!picked) {
       setError('Click the map to set a center point.');
@@ -230,13 +262,15 @@ function HostLocationInner() {
       for (let i = 0; i < tileCenters.length; i++) {
         const batch = await fetchNearbyAtCenter(tileCenters[i]);
         aggregated.push(...batch);
-        await new Promise((r) => setTimeout(r, 250));
+        await new Promise((r) => setTimeout(r, 250)); // gentle pacing
       }
 
+      // Keep only places within the exact radius (tile sweep may exceed the circle)
       const within = aggregated.filter((pl) =>
         pl.lat && pl.lng ? haversineMiles(picked!, { lat: pl.lat, lng: pl.lng }) <= radiusMi : true
       );
 
+      // Sort by distance (nearest first)
       const sorted = within.sort((a, b) => {
         const da =
           a.lat && a.lng
@@ -258,6 +292,7 @@ function HostLocationInner() {
     }
   }
 
+  /** 4-letter session code generator (A–Z) */
   const generateSessionCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     return Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join(
@@ -265,7 +300,7 @@ function HostLocationInner() {
     );
   };
 
-  // --- swipe and confirm functions (unchanged from previous version) ---
+  /** Create a SOLO session, insert restaurants, navigate to swipe */
   async function goToSwipe() {
     if (!picked || results.length === 0)
       return setError(!picked ? 'Pick a point first' : 'Find restaurants first');
@@ -315,6 +350,7 @@ function HostLocationInner() {
     router.push(`/host/swipe?session=${session.code}`);
   }
 
+  /** Create a GROUP session (with expiry), insert restaurants, navigate to confirm */
   async function goToConfirmPage() {
     if (!picked || results.length === 0)
       return setError(!picked ? 'Pick a point first' : 'Find restaurants first');
@@ -364,7 +400,9 @@ function HostLocationInner() {
     if (restError) return setError('Failed to save restaurants: ' + restError.message);
 
     router.push(
-      `/host/confirm?session=${encodeURIComponent(session.code)}&ends_at=${encodeURIComponent(session.ends_at)}`
+      `/host/confirm?session=${encodeURIComponent(session.code)}&ends_at=${encodeURIComponent(
+        session.ends_at
+      )}`
     );
   }
 
@@ -385,6 +423,7 @@ function HostLocationInner() {
           <div className="rounded-xl bg-white border shadow-md p-5 space-y-4">
             <h2 className="text-xl font-semibold">Search Settings</h2>
 
+            {/* Mode toggle */}
             <div className="flex gap-2">
               <button
                 className={`flex-1 py-2 rounded-md font-medium ${
@@ -408,6 +447,7 @@ function HostLocationInner() {
               </button>
             </div>
 
+            {/* Price filter */}
             <div>
               <label className="block text-sm text-gray-700">Price</label>
               <select
@@ -425,6 +465,7 @@ function HostLocationInner() {
               </select>
             </div>
 
+            {/* Radius slider */}
             <div>
               <label className="block text-sm text-gray-700">Radius: {radiusMi} miles</label>
               <input
@@ -438,6 +479,7 @@ function HostLocationInner() {
               />
             </div>
 
+            {/* Actions */}
             <button
               onClick={() => sweepTiles({ reset: true })}
               disabled={!isFindEnabled}
