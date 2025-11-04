@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 
-// GET: Fetch a session by its code
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ code: string }> } // Next.js expects a Promise
-) {
+/**
+ * GET /api/sessions/[code]
+ *
+ * Fetch an existing session by its unique join code.
+ *
+ * Path Param:
+ * - code: string (required)
+ *
+ * Response Example:
+ * { session: {...} }
+ *
+ * Errors:
+ * - 400 missing code
+ * - 500 session lookup failure
+ */
+export async function GET(request: NextRequest, context: { params: Promise<{ code: string }> }) {
   try {
     const { code } = await context.params;
 
@@ -29,7 +40,23 @@ export async function GET(
   }
 }
 
-// POST: Optionally, create a new session
+/**
+ * POST /api/sessions/[code]
+ *
+ * Create a new session with a specific pre-generated code.
+ * Useful in scenarios where the session code is not automatically assigned
+ * and needs to be explicitly controlled by the client or backend workflow.
+ *
+ * Body:
+ * - code: string (required)
+ *
+ * Response: 201 created
+ * { session: {...} }
+ *
+ * Errors:
+ * - 400 missing code
+ * - 500 insert failure
+ */
 export async function POST(request: NextRequest, context: { params: Promise<{ code: string }> }) {
   try {
     const body = await request.json();
