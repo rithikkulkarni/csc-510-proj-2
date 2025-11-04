@@ -107,7 +107,7 @@ describe('Home Page', () => {
     expect(screen.getByText('JOIN')).toBeInTheDocument();
     expect(screen.getByText('Create Session')).toBeInTheDocument();
 
-    expect(screen.getByTestId('join-input')).toBeInTheDocument();
+    expect(screen.getByTestId('join-code-input')).toBeInTheDocument();
     expect(screen.getByTestId('join-button')).toBeInTheDocument();
   });
 
@@ -118,7 +118,7 @@ describe('Home Page', () => {
     const nameInput = screen.getByPlaceholderText(/enter your name/i);
     fireEvent.change(nameInput, { target: { value: 'Tester' } });
 
-    const input = screen.getByTestId('join-input') as HTMLInputElement;
+    const input = screen.getByTestId('join-code-input') as HTMLInputElement;
     const button = screen.getByTestId('join-button');
 
     // 1) Enter incorrect code -> "Invalid session code."
