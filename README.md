@@ -349,8 +349,6 @@ We fetch Google Places data on the server (Next.js API route) so clients never s
 GOOGLE_MAPS_API_KEY=your-places-api-key
 ```
 
-
-
 [![Coverage Status](https://coveralls.io/repos/github/rithikkulkarni/csc-510-proj-2/badge.svg?branch=main)](https://coveralls.io/github/rithikkulkarni/csc-510-proj-2?branch=main)
 [![Lint](https://github.com/rithikkulkarni/csc-510-proj-2/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/rithikkulkarni/csc-510-proj-2/actions/workflows/lint.yml)
 
