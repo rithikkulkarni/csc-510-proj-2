@@ -91,9 +91,7 @@ describe('LeafletMap', () => {
   it('renders Marker and Circle when picked is provided (with custom radius)', async () => {
     const { default: LeafletMap } = await import('./LeafletMap');
 
-    render(
-      <LeafletMap picked={{ lat: 35.0, lng: -78.0 }} onPick={() => {}} radiusMeters={3210} />
-    );
+    render(<LeafletMap picked={{ lat: 35.0, lng: -78.0 }} onPick={() => {}} radiusMeters={3210} />);
 
     const marker = screen.getByTestId('marker');
     const circle = screen.getByTestId('circle');
