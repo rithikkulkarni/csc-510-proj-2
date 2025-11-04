@@ -1,6 +1,7 @@
 'use client';
 
-import { Suspense } from 'react';
+//import { Suspense } from 'react';
+import React, { Suspense } from 'react';
 import SwipePage from './SwipePage';
 
 export default function Page() {
