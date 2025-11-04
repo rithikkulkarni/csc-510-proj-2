@@ -303,6 +303,53 @@ env:
 
 ```
 
+## Supabase Integration
+
+This project uses **Supabase** (hosted at supabase.com) for cloud database support.
+
+### Install
+```bash
+npm i @supabase/supabase-js
+```
+
+### Environment Variables
+Create **`.env.local`** (make sure you never commit secrets):
+```bash
+# Public (safe to expose to the browser, still keep in env files)
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+
+# Server-only (NEVER expose to the client. Optional and used for admin/server actions)
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+> The `SERVICE_ROLE_KEY` bypasses RLS and must only be used server-side in API routes or server actions.
+
+### Client helper
+**`src/lib/supabaseClient.ts`**
+```ts
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+```
+
+## Google Places API Integration
+
+We fetch Google Places data on the server (Next.js API route) so clients never see your key directly
+
+### Enable API & key
+1. In Google Cloud Console, enable **Places API** (and **Maps Geocoding API** if you need geocodes).  
+2. Create an API key and restrict it to the **Places API** (API restriction). For server-side (Vercel), you usually cannot IP-restrict—use **API restrictions** + separate keys per environment.
+
+**`.env.local`**
+```bash
+GOOGLE_MAPS_API_KEY=your-places-api-key
+```
+
+
 
 [![Coverage Status](https://coveralls.io/repos/github/rithikkulkarni/csc-510-proj-2/badge.svg?branch=main)](https://coveralls.io/github/rithikkulkarni/csc-510-proj-2?branch=main)
 [![Lint](https://github.com/rithikkulkarni/csc-510-proj-2/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/rithikkulkarni/csc-510-proj-2/actions/workflows/lint.yml)
