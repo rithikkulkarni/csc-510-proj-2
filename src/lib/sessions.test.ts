@@ -1,4 +1,25 @@
-// src/lib/sessions.test.ts
+/**
+ * sessions.test.ts
+ *
+ * Tests the `getSessionByCode` function which fetches a session by its code from Supabase.
+ *
+ * Behavior Tested:
+ * - Returns session data when the session exists
+ * - Throws an error when Supabase returns an error
+ *
+ * Setup:
+ * - Mocks `supabase.from().select().eq().single()` before each test
+ * - Restores mocks after each test
+ *
+ * Test Cases:
+ * 1. Returns session data for a valid code
+ * 2. Throws an error if Supabase returns an error
+ *
+ * Notes:
+ * - Uses Vitest for mocking and assertions
+ * - Covers both success and failure paths
+ */
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { getSessionByCode } from './sessions';
 import { supabase } from './supabaseClient';

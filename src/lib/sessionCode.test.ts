@@ -1,4 +1,18 @@
-// src/lib/sessionCode.test.ts
+/**
+ * sessionCode.test.ts
+ *
+ * Tests the `generateCode` function which produces a random session code.
+ *
+ * Behavior Tested:
+ * - Returns a string of uppercase letters of default length 4
+ * - Returns a string of custom length when specified
+ * - Handles zero length gracefully
+ *
+ * Notes:
+ * - Uses Vitest for assertions and spying on `crypto.getRandomValues`
+ * - Ensures only uppercase letters are returned
+ */
+
 import { describe, it, expect, vi } from 'vitest';
 import { generateCode } from './sessionCode';
 
