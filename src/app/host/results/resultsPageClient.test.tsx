@@ -245,8 +245,8 @@ describe('ResultsPageClient', () => {
       expect(screen.getByRole('heading', { name: /results/i })).toBeInTheDocument()
     );
 
-    expect(screen.getByRole('heading', { name: /top choice/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /last man standing/i })).toBeInTheDocument();
+    await screen.findByRole('heading', { name: /top choice/i });
+    await screen.findByRole('heading', { name: /last man standing/i });
 
     const topCard = screen.getByText(/Top Place/).closest('div')!;
     expect(within(topCard).getByText('123 A St')).toBeInTheDocument();
@@ -392,7 +392,7 @@ describe('ResultsPageClient', () => {
       expect(screen.getByRole('heading', { name: /group results/i })).toBeInTheDocument()
     );
 
-    expect(screen.getByRole('heading', { name: /top voted restaurants/i })).toBeInTheDocument();
+    await screen.findByRole('heading', { name: /top voted restaurants/i });
 
     // Rank borders exist on wrappers
     await waitFor(() => {
