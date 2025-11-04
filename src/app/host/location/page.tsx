@@ -505,8 +505,11 @@ function HostLocationInner() {
             {mode === 'group' && (
               <>
                 <div>
-                  <label className="block text-sm text-gray-700">Session Expiration (hours)</label>
+                  <label htmlFor="expiry-input" className="block text-sm text-gray-700">
+                    Session Expiration (hours)
+                  </label>
                   <input
+                    id="expiry-input"
                     type="number"
                     min={1}
                     max={48}
@@ -516,6 +519,7 @@ function HostLocationInner() {
                     className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
                   />
                 </div>
+
                 <button
                   onClick={goToConfirmPage}
                   disabled={!canCreate}

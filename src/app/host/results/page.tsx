@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import React from 'react';
 import ResultsPageClient from './ResultsPageClient';
 
 export const dynamic = 'force-dynamic'; // Ensures dynamic rendering (no static prerender)

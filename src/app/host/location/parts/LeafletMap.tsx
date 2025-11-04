@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { MapContainer, TileLayer, Marker, Circle, useMap, useMapEvents } from 'react-leaflet';
 import { useEffect } from 'react';
 import L from 'leaflet';
