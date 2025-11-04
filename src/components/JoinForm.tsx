@@ -64,7 +64,10 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
     'w-full rounded-2xl bg-green-800 text-white font-bold text-lg py-4 shadow-md hover:bg-green-900 transition transform duration-150 hover:scale-105';
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const filtered = e.target.value.replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 4);
+    const filtered = e.target.value
+      .replace(/[^A-Za-z]/g, '')
+      .toUpperCase()
+      .slice(0, 4);
     setCode(filtered);
     setMessage(null);
   };
