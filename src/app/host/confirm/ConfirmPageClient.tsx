@@ -94,8 +94,8 @@ export default function ConfirmPageClient() {
   useEffect(() => {
     if (!expiresAt) return;
 
-    function updateCountdown() {
-      const diff = expiresAt.getTime() - Date.now();
+    function updateCountdown(ends: Date) {
+      const diff = ends.getTime() - Date.now();
 
       if (diff <= 0) {
         setTimeLeft('Expired');
@@ -111,8 +111,8 @@ export default function ConfirmPageClient() {
       setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
     }
 
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
+    updateCountdown(expiresAt);
+    const interval = setInterval(() => updateCountdown(expiresAt), 1000);
     return () => clearInterval(interval);
   }, [expiresAt]);
 
