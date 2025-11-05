@@ -226,7 +226,6 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
         </button>
       )}
 
-
       {message && (
         <p data-testid="join-message" className="text-red-600 font-medium mt-2">
           {message}

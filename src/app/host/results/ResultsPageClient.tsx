@@ -500,7 +500,9 @@ export default function ResultsPageClient() {
           .filter(Boolean) as Restaurant[];
 
         setTopRestaurants(topRestaurants);
+        const rankedTopRestaurants = topRestaurants.map((r, idx) => ({ ...r, rank: idx + 1 }));
 
+        setTopRestaurants(rankedTopRestaurants);
         const lastVoteMap: Record<number, number> = {};
         votesData.forEach((v) => {
           if (!lastVoteMap[v.user_id]) lastVoteMap[v.user_id] = v.restaurant_id;
@@ -588,20 +590,46 @@ export default function ResultsPageClient() {
     );
 
   return (
-    <div className="min-h-screen bg-green-100 px-4 py-10 flex flex-col items-center">
-      {/* Header with Logo + Title */}
-      <header className="flex items-center gap-4 mb-6">
-        <Image src="/logo.png" alt="Food Finder Logo" width={70} height={70} className="drop-shadow-md" />
-        <div className="flex flex-col">
-          <h1 className="text-4xl font-extrabold text-green-900">Food Finder</h1>
-          <span className="text-lg text-green-700 font-medium mt-1">Results</span>
+    <div className="relative min-h-screen text-gray-900 flex flex-col items-center justify-start px-6 py-10 overflow-hidden">
+      {/* Background */}
+      <Image
+        src="/background.png"
+        alt="Background"
+        fill
+        className="absolute inset-0 object-cover z-0"
+        priority
+      />
+
+      {/* Top-left Logo + Title + Slogan */}
+      <div className="absolute top-4 left-4 z-20 flex flex-row items-start gap-2">
+        <div className="relative w-10 h-10">
+          <Image src="/logo.png" alt="Logo" width={40} height={40} className="animate-float" />
         </div>
+        <div className="flex flex-col items-start gap-0">
+          <h1 className="text-lg font-extrabold uppercase text-green-800" style={{ lineHeight: '1', textShadow: '0 0 2px rgba(203,241,195,0.5),0 0 4px rgba(203,241,195,0.3)' }}>
+            FOOD FINDER
+          </h1>
+          <p className="text-[8px] font-semibold text-gray-700 mt-0" style={{ lineHeight: '0.95', textShadow: '1px 1px 1px rgba(0,0,0,0.1)' }}>
+            DECISIONS ARE HARD.<br />EATING TOGETHER SHOULDN'T BE.
+          </p>
+        </div>
+      </div>
+
+      {/* Page Header */}
+      <header className="relative z-10 mb-12 text-center w-full">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-green-800">
+          Choose Your Favorite
+        </h1>
+        <p className="text-lg md:text-xl font-bold text-gray-700 mt-2">
+          Pick your preferred option or skip if it's too tough!
+        </p>
       </header>
 
-      <div className="max-w-5xl w-full space-y-6">
-        {/* Top Voted Restaurants */}
+      {/* Top Voted & Last Man Standing Sections */}
+      <div className="relative z-10 max-w-5xl w-full space-y-8">
+        {/* Top Voted */}
         {topRestaurants.length > 0 && (
-          <section className="rounded-3xl p-6 bg-white shadow-lg hover:shadow-xl transition-all duration-200">
+          <section className="rounded-3xl p-6 bg-white shadow-md hover:shadow-xl transition duration-200">
             <h2 className="text-2xl font-bold text-green-800 mb-4 text-center border-b-4 border-green-300 pb-2 w-3/4 mx-auto">
               Top Voted
             </h2>
@@ -615,7 +643,7 @@ export default function ResultsPageClient() {
 
         {/* Last Man Standing */}
         {lastManStanding.length > 0 && (
-          <section className="rounded-3xl p-6 bg-white shadow-lg hover:shadow-xl transition-all duration-200">
+          <section className="rounded-3xl p-6 bg-white shadow-md hover:shadow-xl transition duration-200">
             <h2 className="text-2xl font-bold text-green-800 mb-4 text-center border-b-4 border-green-300 pb-2 w-3/4 mx-auto">
               Last Man Standing
             </h2>
@@ -628,7 +656,7 @@ export default function ResultsPageClient() {
         )}
 
         {/* Return Home */}
-        <div className="text-center mt-6">
+        <div className="text-center mt-8">
           <Link
             href="/"
             className="inline-block rounded-2xl bg-green-800 text-white font-bold text-lg py-3 px-6 shadow-md hover:shadow-lg hover:bg-green-900 transition transform duration-150 hover:scale-105"
@@ -639,30 +667,65 @@ export default function ResultsPageClient() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-10 text-gray-500 text-sm text-center">
+      <footer className="relative z-10 mt-12 text-gray-500 text-sm text-center">
         © {new Date().getFullYear()} Food Finder
       </footer>
     </div>
   );
 
 
-
-  function RestaurantCard({ r, rankBorder, uniformBorder }: { r: Restaurant; rankBorder?: string; uniformBorder?: boolean }) {
+  function RestaurantCard({
+    r,
+    rankBorder,
+    uniformBorder,
+  }: {
+    r: Restaurant;
+    rankBorder?: string;
+    uniformBorder?: boolean;
+  }) {
     return (
       <div
         className={`p-4 rounded-2xl shadow-md bg-white flex flex-col gap-2 relative transition-transform duration-150 hover:-translate-y-1 hover:scale-[1.02] ${uniformBorder ? 'border-2 border-gray-300' : rankBorder || ''
           }`}
       >
-        {r.votes !== undefined && <div className="absolute top-2 right-4 font-bold text-green-900">Votes: {r.votes}</div>}
-        <h3 className="text-lg font-semibold text-green-900">{r.rank ? `#${r.rank} ` : ''}{r.name}</h3>
+        {r.votes !== undefined && (
+          <div className="absolute top-2 right-4 font-bold text-green-900">Votes: {r.votes}</div>
+        )}
+        <h3 className="text-lg font-semibold text-green-900">
+          {r.rank ? `#${r.rank} ` : ''}
+          {r.name}
+        </h3>
         {r.address && <p className="text-sm text-green-800">{r.address}</p>}
         <div className="flex gap-3 mt-1 text-green-900 text-sm">
           <span>Price: {r.price ? '$'.repeat(r.price) : 'N/A'}</span>
           <span>Rating: {r.rating ?? 'N/A'} ⭐</span>
         </div>
-        {r.website && <a href={r.website} target="_blank" rel="noreferrer" className="text-green-700 underline text-sm">Website</a>}
-        {r.maps_uri && <a href={r.maps_uri} target="_blank" rel="noreferrer" className="text-green-700 underline text-sm">Google Maps</a>}
-        {r.users && <p className="text-sm text-green-700 mt-1"><strong>Voted by:</strong> {r.users.join(', ')}</p>}
+        {r.website && (
+          <a
+            href={r.website}
+            target="_blank"
+            rel="noreferrer"
+            className="text-green-700 underline text-sm"
+          >
+            Website
+          </a>
+        )}
+        {r.maps_uri && (
+          <a
+            href={r.maps_uri}
+            target="_blank"
+            rel="noreferrer"
+            className="text-green-700 underline text-sm"
+          >
+            Google Maps
+          </a>
+        )}
+        {r.users && (
+          <p className="text-sm text-green-700 mt-1">
+            <strong>Voted by:</strong> {r.users.join(', ')}
+          </p>
+        )}
       </div>
     );
   }
+}
