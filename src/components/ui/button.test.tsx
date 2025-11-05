@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { Button, buttonVariants } from './Button';
+import { Button, buttonVariants } from './button';
 
 describe('Button component', () => {
   it('renders with default props', () => {
