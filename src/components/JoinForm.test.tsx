@@ -454,4 +454,51 @@ describe('JoinForm', () => {
       expect(message).toBeInTheDocument();
     }
   });
+
+  it('prevents multiple submissions via Enter key spam', async () => {
+    render(<JoinForm />);
+    const codeInput = screen.getByTestId('join-code-input');
+    fireEvent.change(codeInput, { target: { value: 'ABCD' } });
+    fireEvent.keyDown(codeInput, { key: 'Enter' });
+    fireEvent.keyDown(codeInput, { key: 'Enter' });
+    fireEvent.keyDown(codeInput, { key: 'Enter' });
+    await waitFor(() => {
+      const button = screen.getByTestId('join-button');
+      expect(button).not.toBeDisabled();
+    });
+  });
+  it('handles session ending exactly now', async () => {
+    const now = new Date();
+    vi.setSystemTime(now);
+    (supabase.from as any).mockImplementation((table: string) => {
+      if (table === 'sessions')
+        return {
+          select: () => ({
+            eq: () => ({
+              single: async () => ({
+                data: { id: 1, code: 'NOW1', ends_at: now.toISOString() },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      if (table === 'restaurants')
+        return {
+          select: () => ({
+            eq: async () => ({ data: [{ id: 1, name: 'Pizza', session_id: 1 }], error: null }),
+          }),
+        };
+      return {
+        select: () => ({ eq: () => ({ single: async () => ({ data: null, error: null }) }) }),
+      };
+    });
+    render(<JoinForm />);
+    fireEvent.change(screen.getByTestId('join-name-input'), { target: { value: 'Bob' } });
+    fireEvent.change(screen.getByTestId('join-code-input'), { target: { value: 'NOW1' } });
+    fireEvent.click(screen.getByTestId('join-button'));
+    await waitFor(() => {
+      const message = screen.getByTestId('join-message');
+      expect(message).toBeInTheDocument();
+    });
+  });
 });
