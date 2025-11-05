@@ -508,15 +508,15 @@ export default function ResultsPageClient() {
             const r = topData?.find((t) => t.id === id);
             return r
               ? {
-                id: r.id,
-                name: r.name,
-                address: r.address,
-                website: r.website,
-                maps_uri: r.maps_uri,
-                rating: r.rating,
-                price: r.price_level,
-                votes: voteCounts[r.id] || 0,
-              }
+                  id: r.id,
+                  name: r.name,
+                  address: r.address,
+                  website: r.website,
+                  maps_uri: r.maps_uri,
+                  rating: r.rating,
+                  price: r.price_level,
+                  votes: voteCounts[r.id] || 0,
+                }
               : null;
           })
           .filter(Boolean) as Restaurant[];
@@ -718,8 +718,9 @@ export default function ResultsPageClient() {
   }) {
     return (
       <div
-        className={`p-4 rounded-2xl shadow-md bg-white flex flex-col gap-2 relative transition-transform duration-150 hover:-translate-y-1 hover:scale-[1.02] ${uniformBorder ? 'border-2 border-gray-300' : rankBorder || ''
-          }`}
+        className={`p-4 rounded-2xl shadow-md bg-white flex flex-col gap-2 relative transition-transform duration-150 hover:-translate-y-1 hover:scale-[1.02] ${
+          uniformBorder ? 'border-2 border-gray-300' : rankBorder || ''
+        }`}
       >
         {r.votes !== undefined && (
           <div className="absolute top-2 right-4 font-bold text-green-900">Votes: {r.votes}</div>

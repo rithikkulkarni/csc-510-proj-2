@@ -320,7 +320,7 @@ function HostLocationInner() {
         savedAt: Date.now(),
       };
       sessionStorage.setItem(LAST_SEARCH_KEY, JSON.stringify(payload));
-    } catch { }
+    } catch {}
   }
 
   /** Sweep all tile centers, aggregate and sort by distance from `picked` */
@@ -485,19 +485,21 @@ function HostLocationInner() {
           {/* Mode Buttons */}
           <div className="flex gap-2">
             <button
-              className={`flex-1 py-2 rounded-md font-medium ${mode === 'solo'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-200 text-gray-700 cursor-pointer hover:scale-105'
-                }`}
+              className={`flex-1 py-2 rounded-md font-medium ${
+                mode === 'solo'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 text-gray-700 cursor-pointer hover:scale-105'
+              }`}
               onClick={() => setMode('solo')}
             >
               Solo
             </button>
             <button
-              className={`flex-1 py-2 rounded-md font-medium ${mode === 'group'
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-200 text-gray-700 cursor-pointer hover:scale-105'
-                }`}
+              className={`flex-1 py-2 rounded-md font-medium ${
+                mode === 'group'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-200 text-gray-700 cursor-pointer hover:scale-105'
+              }`}
               onClick={() => setMode('group')}
             >
               Group
@@ -537,15 +539,12 @@ function HostLocationInner() {
           {/* Expiry for Group Mode */}
           {mode === 'group' && (
             <div>
-              <label
-                htmlFor="expiry-input"
-                className="block text-sm text-gray-700"
-              >
+              <label htmlFor="expiry-input" className="block text-sm text-gray-700">
                 Session Expiration (hours)
               </label>
               <input
-                id="expiry-input"          // link label for accessibility
-                data-testid="expiry-input"  // for testing
+                id="expiry-input" // link label for accessibility
+                data-testid="expiry-input" // for testing
                 type="number"
                 min={1}
                 max={48}
@@ -557,7 +556,6 @@ function HostLocationInner() {
             </div>
           )}
 
-
           {/* Tip */}
           {!picked && (
             <p className="text-sm text-gray-500 mt-2">Tip: click the map to set the center.</p>
@@ -567,8 +565,9 @@ function HostLocationInner() {
           <button
             onClick={() => sweepTiles({ reset: true })}
             disabled={!isFindEnabled}
-            className={`w-full mt-3 py-2 rounded-md bg-blue-600 text-white disabled:opacity-50 ${isFindEnabled ? 'cursor-pointer' : ''
-              }`}
+            className={`w-full mt-3 py-2 rounded-md bg-blue-600 text-white disabled:opacity-50 ${
+              isFindEnabled ? 'cursor-pointer' : ''
+            }`}
           >
             {loading ? 'Searching…' : 'Find Restaurants'}
           </button>
@@ -578,8 +577,9 @@ function HostLocationInner() {
             <button
               onClick={goToSwipe}
               disabled={!canSwipe}
-              className={`w-full mt-2 py-2 rounded-md bg-green-600 text-white disabled:opacity-50 ${canSwipe ? 'cursor-pointer' : ''
-                }`}
+              className={`w-full mt-2 py-2 rounded-md bg-green-600 text-white disabled:opacity-50 ${
+                canSwipe ? 'cursor-pointer' : ''
+              }`}
             >
               Start Swiping
             </button>
@@ -588,8 +588,9 @@ function HostLocationInner() {
             <button
               onClick={goToConfirmPage}
               disabled={!canCreate}
-              className={`w-full mt-2 py-2 rounded-md bg-purple-600 text-white disabled:opacity-50 ${canCreate ? 'cursor-pointer' : ''
-                }`}
+              className={`w-full mt-2 py-2 rounded-md bg-purple-600 text-white disabled:opacity-50 ${
+                canCreate ? 'cursor-pointer' : ''
+              }`}
             >
               Create Session
             </button>

@@ -269,7 +269,6 @@ describe('HostLocationPage (flex version)', () => {
     const expiryInput = screen.getByTestId('expiry-input');
     fireEvent.change(expiryInput, { target: { value: 4 } });
 
-
     fireEvent.click(screen.getByRole('button', { name: /create/i }));
 
     await waitFor(
