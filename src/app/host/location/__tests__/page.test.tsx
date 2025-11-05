@@ -1,51 +1,29 @@
-// import React from 'react';
-// import { describe, it, expect, vi } from 'vitest';
-// import { render } from '@testing-library/react';
-// import HostLocationPage from '../page';
-
-// // Mock the HostLocationForm component
-// vi.mock('@/components/HostLocationForm', () => ({
-//   default: ({ price }: { price: string }) => (
-//     <div data-testid="host-location-form">Price: {price}</div>
-//   ),
-// }));
-
-// describe('HostLocationPage', () => {
-//   // Commented out because the price value is not important and causes test failure
-//   // it('passes the price from search params to HostLocationForm', () => {
-//   //   const { getByTestId } = render(
-//   //     <HostLocationPage searchParams={{ price: '10-20' }} />
-//   //   );
-
-//   //   expect(getByTestId('host-location-form').textContent).toBe('Price: 10-20');
-//   // });
-
-//   it('handles missing price parameter', () => {
-//     const { getByTestId } = render(
-//       <HostLocationPage searchParams={{}} />
-//     );
-
-//     expect(getByTestId('host-location-form').textContent).toBe('Price: ');
-//   });
-
-//   it('handles undefined searchParams', () => {
-//     const { getByTestId } = render(
-//       <HostLocationPage searchParams={{}} />
-//     );
-
-//     expect(getByTestId('host-location-form').textContent).toBe('Price: ');
-//   });
-// });
-
 // src/app/host/location/__tests__/page.test.tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import Page from '../page';
 
+/**
+ * Unit/Integration (minimal) — HostLocationPage
+ *
+ * Focus:
+ * - Initial UX state: “Find restaurants” button disabled until a map pick is made
+ * - Tip/guidance copy is visible before user selects a center point
+ * - Clicking disabled search does not throw or produce spurious errors
+ *
+ * Mocks:
+ * - next/navigation: basic router + search params
+ * - next/dynamic: returns a sync mock map component that calls `onPick`
+ * - global fetch: stubbed to mimic Places API responses
+ *
+ * @group integration
+ */
+
 // -------------------- Mocks --------------------
 let searchParamsInit = '';
 
+// Router + search params
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
@@ -79,7 +57,9 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-// Helper to mock a Places API response
+/**
+ * Helper: stub a minimal Google Places “Nearby (New)” response
+ */
 function mockPlacesResponse(places: any[]) {
   vi.mocked(global.fetch as any).mockResolvedValue({
     ok: true,
@@ -89,68 +69,12 @@ function mockPlacesResponse(places: any[]) {
 
 // -------------------- Tests --------------------
 describe('HostLocationPage (minimal)', () => {
-  //   it('initializes price from query, performs search, then navigates to swipe', async () => {
-  //     // initialize select from priceIdx=2
-  //     searchParamsInit = 'priceIdx=2'
-
-  //     mockPlacesResponse([
-  //       {
-  //         id: 'p1',
-  //         displayName: { text: 'Fancy Spot' },
-  //         formattedAddress: '123 A St',
-  //         location: { latitude: 35.78, longitude: -78.64 },
-  //         rating: 4.6,
-  //         priceLevel: 'PRICE_LEVEL_EXPENSIVE', // -> 2
-  //         currentOpeningHours: { openNow: true },
-  //         googleMapsUri: 'https://maps.google.com/?q=fancy',
-  //       },
-  //       {
-  //         id: 'p2',
-  //         displayName: { text: 'Cheaper Spot' },
-  //         formattedAddress: '456 B St',
-  //         location: { latitude: 35.77, longitude: -78.63 },
-  //         rating: 4.0,
-  //         priceLevel: 'PRICE_LEVEL_MODERATE', // -> 1 (filtered out)
-  //         googleMapsUri: 'https://maps.google.com/?q=cheap',
-  //       },
-  //     ])
-
-  //     render(<Page />)
-
-  //     // Click the mocked map to set picked coords
-  //     fireEvent.click(screen.getByTestId('mock-map'))
-
-  //     // Select should be initialized to 2; query by role (combobox) instead of label
-  //     const select = screen.getByRole('combobox') as HTMLSelectElement
-  //     expect(select.value).toBe('2')
-
-  //     // Run a search
-  //     const findBtn = screen.getByRole('button', { name: /find restaurants/i })
-  //     expect(findBtn).not.toHaveAttribute('disabled')
-  //     fireEvent.click(findBtn)
-
-  //     // We should see the $$$ place only
-  //     await waitFor(() => {
-  //       expect(screen.getByText('Fancy Spot')).toBeInTheDocument()
-  //     })
-
-  //     // Begin swiping and assert navigation
-  //     const begin = screen.getByRole('button', { name: /begin swiping/i })
-  //     expect(begin).not.toHaveAttribute('disabled')
-  //     fireEvent.click(begin)
-
-  //     const { useRouter } = await import('next/navigation')
-  //     const push = (useRouter() as any).push as unknown as ReturnType<typeof vi.fn>
-  //     expect(push).toHaveBeenCalledTimes(1)
-
-  //     const url = String(push.mock.calls[0][0])
-  //     expect(url).toMatch(/^\/host\/swipe\?/)
-  //     expect(url).toMatch(/lat=35\.7796/)
-  //     expect(url).toMatch(/lng=-78\.6382/)
-  //     expect(url).toMatch(/radiusMi=3/)
-  //     expect(url).toMatch(/priceIdx=2/)
-  //   })
-
+  /**
+   * Verifies pre-pick UI state:
+   * - Search button disabled
+   * - Guidance tip visible
+   * - Clicking disabled button is a no-op (no new error text appears)
+   */
   it('keeps search disabled without a picked point and shows the tip', async () => {
     searchParamsInit = '';
     mockPlacesResponse([]);

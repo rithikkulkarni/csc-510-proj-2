@@ -17,11 +17,18 @@ export default function ConfirmPageClient() {
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Expiry tracking
   const [expired, setExpired] = useState(false);
   const [timeLeft, setTimeLeft] = useState('');
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
 
-  // Fetch session
+  /**
+   * Fetch the session row once the code is known.
+   * Handles:
+   * - Missing / invalid session code
+   * - Session not found
+   * - Expired session at time of load
+   */
   useEffect(() => {
     async function fetchSession() {
       if (!code) {
@@ -42,11 +49,12 @@ export default function ConfirmPageClient() {
         return;
       }
 
+      // Convert DB timestamp to JS Date (force UTC)
       if (session.ends_at) {
         const ends = new Date(session.ends_at + 'Z');
         setExpiresAt(ends);
-        const now = new Date();
-        if (now > ends) {
+
+        if (new Date() > ends) {
           setExpired(true);
           setMessage('This session has expired.');
         }
@@ -58,7 +66,10 @@ export default function ConfirmPageClient() {
     fetchSession();
   }, [code]);
 
-  // Countdown timer
+  /**
+   * Live countdown timer recalculated every second.
+   * Automatically marks expired state when timer reaches zero.
+   */
   useEffect(() => {
     if (!expiresAt) return;
 
@@ -76,18 +87,24 @@ export default function ConfirmPageClient() {
         return;
       }
 
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      const hours = Math.floor(diff / 3_600_000);
+      const minutes = Math.floor((diff % 3_600_000) / 60_000);
+      const seconds = Math.floor((diff % 60_000) / 1000);
 
       setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
     }
 
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
+    updateCountdown(expiresAt);
+    const interval = setInterval(() => updateCountdown(expiresAt), 1000);
     return () => clearInterval(interval);
   }, [expiresAt]);
 
+  /**
+   * Submit handler:
+   * - If expired → bypass join and view results immediately
+   * - Validate restaurants exist + name uniqueness
+   * - Insert user into Supabase → navigate to swipe page
+   */
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!sessionData) return;
@@ -230,6 +247,7 @@ export default function ConfirmPageClient() {
                   })}
                 </span>
               </p>
+
               {!expired && (
                 <p className="text-green-700 font-bold text-xl">Time remaining: {timeLeft}</p>
               )}
@@ -245,6 +263,9 @@ export default function ConfirmPageClient() {
                        focus:outline-none focus:ring-2 focus:ring-green-400 focus:shadow-lg transition transform duration-200 hover:scale-105
                        ${expired ? 'bg-gray-200 cursor-not-allowed' : ''}`}
             disabled={expired}
+            className={`w-full rounded-lg border border-gray-300 bg-white px-5 py-3 text-lg text-black shadow-sm placeholder:text-gray-400
+                        focus:outline-none focus:ring-2 focus:ring-green-300 focus:shadow-lg transition transform duration-200 hover:scale-105
+                        ${expired ? 'bg-gray-200 cursor-not-allowed' : ''}`}
           />
 
           <button

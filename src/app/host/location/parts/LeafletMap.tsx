@@ -1,11 +1,12 @@
 'use client';
 
+import React from 'react';
 import { MapContainer, TileLayer, Marker, Circle, useMap, useMapEvents } from 'react-leaflet';
 import { useEffect } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Fix default marker icon path for Leaflet in bundlers
+// Fix default marker icon path for Leaflet in bundlers (e.g., Next.js)
 const DefaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -16,6 +17,7 @@ const DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 function ClickToSet({ onPick }: { onPick: (pos: { lat: number; lng: number }) => void }) {
+  // Handle map clicks and emit picked lat/lng to parent
   useMapEvents({
     click(e) {
       onPick({ lat: e.latlng.lat, lng: e.latlng.lng });
@@ -24,7 +26,7 @@ function ClickToSet({ onPick }: { onPick: (pos: { lat: number; lng: number }) =>
   return null;
 }
 
-// Imperatively recenter when `picked` changes (no React state)
+// Imperatively re-center when `picked` changes
 function RecenterOnPick({ picked }: { picked: { lat: number; lng: number } | null }) {
   const map = useMap();
   useEffect(() => {
@@ -35,16 +37,31 @@ function RecenterOnPick({ picked }: { picked: { lat: number; lng: number } | nul
   return null;
 }
 
+type LeafletMapProps = {
+  /** Currently picked lat/lng; shows marker + radius circle when present */
+  picked: { lat: number; lng: number } | null;
+  /** Callback invoked when user clicks on the map */
+  onPick: (pos: { lat: number; lng: number }) => void;
+  /** Radius in meters for the search circle (default ~1 mile) */
+  radiusMeters?: number;
+};
+
+/**
+ * LeafletMap
+ *
+ * Interactive map for selecting a location by clicking. Displays a marker and a
+ * circular radius around the picked point, and re-centers when selection changes.
+ *
+ * @example
+ * <LeafletMap picked={picked} onPick={setPicked} radiusMeters={1609} />
+ */
 export default function LeafletMap({
   picked,
   onPick,
   radiusMeters = 1609, // default 1 mile
-}: {
-  picked: { lat: number; lng: number } | null;
-  onPick: (pos: { lat: number; lng: number }) => void;
-  radiusMeters?: number;
-}) {
-  const initialCenter: [number, number] = [40.0, -95.0]; // USA-ish
+}: LeafletMapProps) {
+  // Initial viewport (continental US)
+  const initialCenter: [number, number] = [40.0, -95.0];
   const initialZoom = 4;
 
   return (

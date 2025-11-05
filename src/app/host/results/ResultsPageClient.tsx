@@ -369,6 +369,7 @@
 
 'use client';
 
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -388,6 +389,22 @@ type Restaurant = {
   rank?: number;
 };
 
+/**
+ * ResultsPageClient
+ *
+ * Client-side results view for either:
+ * - **Solo** sessions: shows the single “Top Choice” and “Last Man Standing” from query params.
+ * - **Group** sessions: aggregates votes to compute Top 3 and “Last Man Standing”
+ *   (per-user most recent vote), including voter names.
+ *
+ * Query params:
+ * - `session` (required): session code
+ * - `top`, `last` (solo only): restaurant IDs
+ * - `user` (optional): viewer user id (not strictly required)
+ * - `expires_at` (optional): ISO-like string; if now > ends, show expired notice
+ *
+ * Data sources: Supabase tables `sessions`, `restaurants`, `votes`, `users`.
+ */
 export default function ResultsPageClient() {
   const searchParams = useSearchParams();
   const sessionCode = searchParams.get('session');
@@ -413,6 +430,7 @@ export default function ResultsPageClient() {
       }
 
       try {
+        // Load session by code to determine mode and validity
         const { data: session, error: sessionError } = await supabase
           .from('sessions')
           .select('*')
@@ -426,9 +444,10 @@ export default function ResultsPageClient() {
 
         setSessionMode(session.mode);
 
+        // Optional expiry check (client-side UX)
         if (expiresAtParam) {
           const now = new Date();
-          const endsAt = new Date(expiresAtParam + 'Z');
+          const endsAt = new Date(expiresAtParam + 'Z'); // treat as UTC if naive
           if (now > endsAt) {
             setError('This session has expired. You are viewing the results.');
           }
@@ -458,6 +477,8 @@ export default function ResultsPageClient() {
           return;
         }
 
+        // --- GROUP SESSION ---
+        // Pull all votes (newest first) to compute aggregates
         const { data: votesData } = await supabase
           .from('votes')
           .select('restaurant_id, user_id, created_at')
@@ -469,6 +490,7 @@ export default function ResultsPageClient() {
           return;
         }
 
+        // Top 3 by total vote counts
         const voteCounts: Record<number, number> = {};
         votesData.forEach((v) => {
           voteCounts[v.restaurant_id] = (voteCounts[v.restaurant_id] || 0) + 1;
@@ -504,6 +526,8 @@ export default function ResultsPageClient() {
 
         setTopRestaurants(rankedTopRestaurants);
         const lastVoteMap: Record<number, number> = {};
+        // “Last Man Standing”: newest vote per user, then tally by restaurant
+        const lastVoteMap: Record<number, number> = {}; // user_id -> restaurant_id
         votesData.forEach((v) => {
           if (!lastVoteMap[v.user_id]) lastVoteMap[v.user_id] = v.restaurant_id;
         });
@@ -514,6 +538,7 @@ export default function ResultsPageClient() {
           .select('*')
           .in('id', lastRestaurantIds);
 
+        // Map user_id => name
         const userIds = Object.keys(lastVoteMap).map(Number);
         const { data: userData } = await supabase
           .from('users')
@@ -523,6 +548,7 @@ export default function ResultsPageClient() {
         const userMap: Record<number, string> = {};
         userData?.forEach((u) => (userMap[u.id] = u.name));
 
+        // Invert to restaurant_id => [user names]
         const restaurantUserMap: Record<number, string[]> = {};
         for (const [uidStr, rid] of Object.entries(lastVoteMap)) {
           const ridNum = Number(rid);
@@ -530,6 +556,7 @@ export default function ResultsPageClient() {
           restaurantUserMap[ridNum].push(userMap[Number(uidStr)] || `User ${uidStr}`);
         }
 
+        // Build + rank LMS list
         let lastManStandingData: Restaurant[] = lastRestaurantIds
           .map((id) => {
             const r = lastRestaurants?.find((lr) => lr.id === id);
@@ -563,6 +590,7 @@ export default function ResultsPageClient() {
     fetchResults();
   }, [sessionCode, topId, lastId, userId, expiresAtParam]);
 
+  // Rank styling for Top 3 cards
   const rankBorder = (index: number) => {
     switch (index) {
       case 0:

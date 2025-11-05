@@ -3,6 +3,18 @@ import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
+/**
+ * Button Variants
+ *
+ * Uses class-variance-authority (CVA) to define consistent styling options
+ * for variant + size combinations.
+ *
+ * Supported Variants:
+ * - default, destructive, outline, secondary, ghost, link
+ *
+ * Supported Sizes:
+ * - default, sm, lg, icon
+ */
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer',
   {
@@ -32,9 +44,25 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
+  /** Replace the rendered element with Slot for composition (e.g., wrapping a link) */
   asChild?: boolean;
 }
 
+/**
+ * Button Component
+ *
+ * A reusable, accessible button that supports variants and sizes defined by CVA.
+ * If `asChild` is true, renders a Radix Slot instead of a `<button>` element,
+ * enabling better composition with custom child components (e.g., <Link>).
+ *
+ * @example
+ * <Button variant="secondary" size="lg">Click Me</Button>
+ *
+ * @example
+ * <Button asChild>
+ *   <Link href="/dashboard">Dashboard</Link>
+ * </Button>
+ */
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
@@ -43,6 +71,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
   }
 );
+
 Button.displayName = 'Button';
 
 export { Button, buttonVariants };

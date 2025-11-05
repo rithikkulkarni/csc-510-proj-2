@@ -3,6 +3,21 @@
 import { useMemo, useRef, useState } from 'react';
 import React from 'react';
 
+/**
+ * Demo Nearby Search Page (client)
+ *
+ * Client-side UI that tiles a search area into overlapping circles and calls
+ * Google Places “Nearby (New)” to aggregate restaurants. Includes a simple
+ * price filter that excludes N/A when a specific tier is chosen.
+ *
+ * Notes:
+ * - Uses a basic de-dup by place id/URI/name to avoid repeats across tiles.
+ * - Adds a tiny delay between tile requests to reduce 429s.
+ * - Expects a public Places API key in NEXT_PUBLIC_GOOGLE_PLACES_API_KEY.
+ *
+ * @example
+ * export default function Host() { ... }
+ */
 export default function Host() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,12 +39,11 @@ export default function Host() {
   const degLng = (m: number, baseLat: number) =>
     m / (111_320 * Math.cos((baseLat * Math.PI) / 180));
 
-  // Build a spiral/ring of offsets that cover the whole user radius
+  // Build a ring/plus pattern of centers to cover the user radius
   const tileCenters = useMemo(() => {
     const centers: Array<{ lat: number; lng: number }> = [];
     centers.push({ lat, lng }); // center tile
 
-    // number of rings needed to cover search radius
     const rings = Math.ceil(searchRadiusMeters / tileSpacingMeters);
     for (let r = 1; r <= rings; r++) {
       const d = r * tileSpacingMeters;
@@ -56,6 +70,7 @@ export default function Host() {
   // Track which place IDs we've already added
   const seenIds = useRef<Set<string>>(new Set());
 
+  // Map Places priceLevel → internal 0..3 (null = N/A)
   function toPriceIndex(priceLevel: any): number | null {
     if (priceLevel == null) return null;
     if (typeof priceLevel === 'number') {
@@ -78,6 +93,7 @@ export default function Host() {
     return '$'.repeat(idx + 1);
   }
 
+  // Fetch one tile with Nearby (New); de-dup and apply optional price filter
   async function fetchNearbyAtCenter(center: { lat: number; lng: number }) {
     const resp = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
       method: 'POST',
@@ -125,12 +141,13 @@ export default function Host() {
         _priceIdx: toPriceIndex(p.priceLevel),
       }));
 
-    // Price filter that EXCLUDES N/A when a specific price is selected
+    // When a specific price is selected, exclude N/A
     return selectedPrice === null
       ? deduped
       : deduped.filter((p: any) => p._priceIdx === selectedPrice);
   }
 
+  // Sweep all tiles, with a small delay to avoid QPS spikes
   async function sweepTiles({ reset = false }: { reset?: boolean } = {}) {
     try {
       setLoading(true);
@@ -139,13 +156,11 @@ export default function Host() {
         setResults([]);
         seenIds.current.clear();
       }
-      // Simple sequential sweep with a tiny delay to be gentle on QPS.
       const aggregated: any[] = [];
       for (let i = 0; i < tileCenters.length; i++) {
         const batch = await fetchNearbyAtCenter(tileCenters[i]);
         aggregated.push(...batch);
-        // small delay helps avoid spikes & 429s
-        await new Promise((r) => setTimeout(r, 250));
+        await new Promise((r) => setTimeout(r, 250)); // gentle on rate limits
       }
       setResults((prev) => (reset ? aggregated : [...prev, ...aggregated]));
     } catch (e: any) {

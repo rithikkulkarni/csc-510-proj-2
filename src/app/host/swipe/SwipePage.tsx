@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '../../../lib/supabaseClient';
@@ -15,6 +15,7 @@ type Place = {
   mapsUri?: string;
   website?: string;
   deliveryLinks?: string[];
+  /** Normalized 0–3 price index */
   _priceIdx: number | null;
 };
 
@@ -25,6 +26,23 @@ function priceLabelFromIndex(idx: number | null) {
   return '$'.repeat(idx + 1);
 }
 
+/**
+ * SwipePage
+ *
+ * Pairwise comparison (leader vs. challenger) to pick favorites.
+ * Supports:
+ * - **solo** mode (optional `soloRestaurants` prop) without DB writes.
+ * - **group** mode (session via query `?session=&user=`) with persisted votes.
+ *
+ * Flow:
+ * - Load restaurants (from prop or Supabase by session).
+ * - Present pairs: current leader vs. cursor.
+ * - Record wins/losses locally; in group mode also insert vote rows.
+ * - On completion, navigate to results with top & last IDs.
+ *
+ * Query params (group):
+ * - `session` (code), `user` (id)
+ */
 export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -48,6 +66,7 @@ export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place
 
     async function fetchSessionRestaurants() {
       try {
+        // SOLO: use provided list
         if (soloRestaurants) {
           const initialItems: Item[] = soloRestaurants.map((r) => ({ ...r, wins: 0, losses: 0 }));
           setItems(initialItems);
@@ -56,6 +75,7 @@ export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place
           return;
         }
 
+        // GROUP: load session + restaurants by session code
         if (!sessionCode) {
           setError('No session code provided.');
           return;
@@ -80,6 +100,7 @@ export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place
           return;
         }
 
+        // Countdown (UTC-based)
         if (session.ends_at) {
           interval = window.setInterval(() => {
             const endsAtUTC = new Date(session.ends_at + 'Z');
@@ -142,6 +163,7 @@ export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place
     [finished, items, leaderIdx, cursor]
   );
 
+  /** Pick winner of current pair; persist vote in group mode */
   const pickWinner = async (index: number) => {
     if (!havePair) return;
 
@@ -175,6 +197,7 @@ export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place
     }
   };
 
+  /** Skip current pair: challenger becomes next leader */
   const skipPair = () => {
     const nextCursor = cursor + 1;
     setLeaderIdx(cursor);
@@ -187,6 +210,7 @@ export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place
     }
   };
 
+  /** Navigate to results: solo -> include top+last; group -> include user+last */
   const routeToResults = (lastId: number) => {
     if (sessionMode === 'solo') {
       const top = items.reduce((prev, curr) => (curr.wins > prev.wins ? curr : prev), items[0]).id;
@@ -196,6 +220,7 @@ export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place
     }
   };
 
+  /** End early */
   const handleDoneVoting = () => {
     const lastId = items[leaderIdx]?.id ?? items[0]?.id;
     routeToResults(lastId);
@@ -297,6 +322,7 @@ export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place
   );
 }
 
+/** Side-by-side choice card for a candidate restaurant */
 function RestaurantCard({ place, onChoose }: { place: Place; onChoose: () => void }) {
   return (
     <button
