@@ -1,6 +1,18 @@
 import { metadata } from './layout';
 
-// This test just verifies metadata and that the layout exports a function
+/**
+ * Unit Test — Root Layout Module
+ *
+ * Confirms that the root layout:
+ * - Exports the expected default `metadata` object (SEO + app identity)
+ * - Exports a valid React component function as the default export
+ *
+ * These tests help ensure:
+ * - Layout configuration changes don't silently break SEO setup
+ * - The layout remains a callable function (React component contract)
+ *
+ * @group unit
+ */
 describe('Root layout module', () => {
   it('exports correct metadata', () => {
     expect(metadata).toEqual({

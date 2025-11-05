@@ -4,32 +4,53 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { describe, it, expect, vi } from 'vitest';
 
-// Import default and named export to cover both lines
+// Import default component and config export to validate both
 import ConfirmPage, { dynamic } from './page';
 
-// Mock the child so it doesn't suspend (fallback wouldn't appear)
+/**
+ * Unit Test — ConfirmPage Wrapper
+ *
+ * What this protects:
+ * ✅ Proper Suspense-based structure is maintained
+ * ✅ Child client component loads immediately in tests
+ * ✅ Dynamic rendering is enforced (dynamic = "force-dynamic")
+ *    due to searchParams usage for session code and expiry
+ *
+ * Mocking strategy:
+ * - The underlying ConfirmPageClient is mocked to avoid
+ *   data fetching behavior and React suspense in test environment
+ *
+ * @group unit
+ */
+
+// Client component mock (skips suspense + network)
 vi.mock('./ConfirmPageClient', () => ({
   __esModule: true,
   default: vi.fn(() => <div data-testid="mock-confirm-client">Confirm Client Loaded</div>),
 }));
 
 describe('ConfirmPage (app/host/confirm/page.tsx)', () => {
+  /**
+   * Ensures React tree mounts correctly with the mocked Suspense behavior
+   * and that the child content shows immediately without fallback.
+   */
   it(`
-  JUSTIFICATION: Renders page with Suspense boundary and child content.
-  Child does not suspend in test, so fallback should not be present.
-  `, () => {
+    JUSTIFICATION: Renders page structure with child content visible.
+    No fallback expected because client component doesn’t suspend in tests.
+    `, () => {
     render(<ConfirmPage />);
 
-    // Child is rendered
     expect(screen.getByTestId('mock-confirm-client')).toBeInTheDocument();
-
-    // Fallback should not appear because the child didn't suspend
     expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
   });
 
+  /**
+   * Validates Next.js rendering behavior configuration
+   */
   it(`
-  JUSTIFICATION: Asserts dynamic export is set to 'force-dynamic' to disable prerendering.
-  `, () => {
+    JUSTIFICATION: Dynamic export must disable prerendering
+    to support runtime params + db queries.
+    `, () => {
     expect(dynamic).toBe('force-dynamic');
   });
 });

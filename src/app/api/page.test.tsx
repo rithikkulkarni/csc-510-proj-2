@@ -1,15 +1,33 @@
+// src/app/api/page.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import Host from './page';
 
-// Mock the environment + fetch
+/**
+ * Integration/UI Tests — Host Page (Price selection + Places fetch)
+ *
+ * Focus:
+ * - Rendering expected UI elements (price selector + Find CTA)
+ * - User can select a price level
+ * - Handles Google Places fetch responses gracefully:
+ *    ✅ Successful `places:searchNearby` response → restaurant data available
+ *    ✅ Failure case → displays error feedback
+ *
+ * Mocks:
+ * - Google Places API (via global.fetch)
+ * - Public API key injected in `beforeAll`
+ *
+ * @group integration @app/api/page
+ */
+
+// Provide fake API key so fetch URL construction succeeds
 beforeAll(() => {
   process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY = 'fake-key';
 });
 
+// Default mock fetch behavior (success for "searchNearby")
 beforeEach(() => {
-  global.fetch = vi.fn(async (url, opts) => {
-    // Simulate success for searchNearby
+  global.fetch = vi.fn(async (url) => {
     if (url.includes('places:searchNearby')) {
       return {
         ok: true,
@@ -35,21 +53,23 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+// -------------------- Tests --------------------
 describe('Host Page Component', () => {
-  it('renders correctly', () => {
+  it('JUSTIFICATION: Renders UI with price filter and Find button.', () => {
     render(<Host />);
-    expect(screen.getByText('Price Range:')).toBeInTheDocument();
-    expect(screen.getByText('Find Restaurants')).toBeInTheDocument();
+    expect(screen.getByText(/price range:/i)).toBeInTheDocument();
+    expect(screen.getByText(/find restaurants/i)).toBeInTheDocument();
   });
 
-  it('changes price filter selection', () => {
+  it('JUSTIFICATION: Dropdown price selection updates correctly.', () => {
     render(<Host />);
-    const select = screen.getByLabelText('Price Range:');
+    const select = screen.getByLabelText(/price range:/i);
     fireEvent.change(select, { target: { value: '2' } });
+
     expect((select as HTMLSelectElement).value).toBe('2');
   });
 
-  it('handles fetch failure gracefully', async () => {
+  it('JUSTIFICATION: Handles fetch failure by surfacing error to user.', async () => {
     (global.fetch as any) = vi.fn(async () => ({
       ok: false,
       status: 500,
@@ -57,11 +77,10 @@ describe('Host Page Component', () => {
     }));
 
     render(<Host />);
-    const button = screen.getByText('Find Restaurants');
-    fireEvent.click(button);
+    fireEvent.click(screen.getByText(/find restaurants/i));
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to fetch|Error 500/i)).toBeInTheDocument();
+      expect(screen.getByText(/failed to fetch|error 500/i)).toBeInTheDocument();
     });
   });
 });

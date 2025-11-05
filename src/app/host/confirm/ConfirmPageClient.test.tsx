@@ -6,6 +6,24 @@ import { describe, it, beforeEach, expect, vi } from 'vitest';
 
 import ConfirmPageClient from './ConfirmPageClient';
 
+/**
+ * Integration/UI Tests — ConfirmPageClient
+ *
+ * Verifies the join/confirm flow behavior:
+ * - Reads `session` from search params, fetches session, and renders form
+ * - Handles expired sessions (CTA switches to “View Results”)
+ * - Enforces name presence and uniqueness
+ * - Requires restaurants to be ready before allowing join
+ * - Inserts a new user and routes to `/host/swipe` on success
+ * - Provides appropriate error messages on failure paths
+ *
+ * Mocks:
+ * - `next/navigation`: `useSearchParams` and `useRouter().push`
+ * - Supabase client: per-table builder via `supabase.from(table)` with chainable stubs
+ *
+ * @group integration
+ */
+
 // -------------------- Mocks --------------------
 const useSearchParamsMock = vi.fn();
 const pushMock = vi.fn();
@@ -23,7 +41,10 @@ vi.mock('../../../lib/supabaseClient', () => ({
   },
 }));
 
-// Utility: build chainable query objects for supabase .from()
+/**
+ * Helper: chainable query object for Supabase `.from()` calls.
+ * Supports only the methods needed by this component.
+ */
 const q = (methods: Record<string, any> = {}) => {
   const noop = vi.fn().mockReturnThis();
   return {
@@ -34,6 +55,9 @@ const q = (methods: Record<string, any> = {}) => {
   };
 };
 
+/**
+ * Assign per-table behaviors for the current test scenario.
+ */
 const setScenario = (handlers: Partial<Record<'sessions' | 'restaurants' | 'users', any>>) => {
   supabaseFromMock.mockImplementation((table: string) => {
     if (table in (handlers as any)) return (handlers as any)[table];
@@ -74,7 +98,7 @@ describe('ConfirmPageClient', () => {
     expect(await screen.findByText(/loading session data/i)).toBeInTheDocument();
   });
 
-  it('JUSTIFICATION: Expired session (ends_at in past) → form renders, disabled name, "View Results" CTA, submit pushes to results.', async () => {
+  it('JUSTIFICATION: Expired session → disabled name, "View Results" CTA, submit pushes to results.', async () => {
     useSearchParamsMock.mockReturnValue({ get: (k: string) => (k === 'session' ? 'ABC' : null) });
 
     const sessions = q({
@@ -86,39 +110,29 @@ describe('ConfirmPageClient', () => {
       }),
     });
 
-    // Restaurants/users are not needed for the expired redirect path
     setScenario({ sessions });
 
     render(<ConfirmPageClient />);
 
-    // Form shows because sessionData is set even though expired
     await screen.findByRole('heading', { name: /session confirmed/i });
 
-    // Session code input is readOnly; name field is disabled due to expired
     expect(screen.getByDisplayValue('ABC')).toBeInTheDocument();
-    const nameInput = screen.getByPlaceholderText(/enter your name/i) as HTMLInputElement;
-    expect(nameInput).toBeDisabled();
+    expect(screen.getByPlaceholderText(/enter your name/i)).toBeDisabled();
 
-    // Button shows "View Results" when expired
     const button = screen.getByRole('button', { name: /view results/i });
-    expect(button).toBeInTheDocument();
-
-    // Submitting should route to results (no name required in expired branch)
     fireEvent.click(button);
+
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/host/results?session=ABC'));
 
-    // Message rendered for expired
     expect(screen.getByText(/this session has expired/i)).toBeInTheDocument();
-
-    // Expires area visible, but no "Time remaining" since already expired
     expect(screen.getByText(/expires at:/i)).toBeInTheDocument();
     expect(screen.queryByText(/time remaining:/i)).not.toBeInTheDocument();
   });
 
-  it('JUSTIFICATION: Future session renders countdown ("Time remaining") and Join CTA.', async () => {
+  it('JUSTIFICATION: Future session → countdown visible and Join CTA present.', async () => {
     useSearchParamsMock.mockReturnValue({ get: (k: string) => (k === 'session' ? 'LIVE' : null) });
 
-    const future = new Date(Date.now() + 60_000).toISOString(); // +1 min
+    const future = new Date(Date.now() + 60_000).toISOString();
     const sessions = q({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -132,7 +146,6 @@ describe('ConfirmPageClient', () => {
 
     render(<ConfirmPageClient />);
 
-    // Form present, countdown present (we don't assert exact numbers)
     await screen.findByRole('button', { name: /join session/i });
     expect(screen.getByText(/time remaining:/i)).toBeInTheDocument();
   });
@@ -154,7 +167,6 @@ describe('ConfirmPageClient', () => {
 
     render(<ConfirmPageClient />);
 
-    // Submit with empty name
     const joinBtn = await screen.findByRole('button', { name: /join session/i });
     fireEvent.click(joinBtn);
 
@@ -183,7 +195,6 @@ describe('ConfirmPageClient', () => {
 
     render(<ConfirmPageClient />);
 
-    // Fill name then submit
     const nameInput = await screen.findByPlaceholderText(/enter your name/i);
     fireEvent.change(nameInput, { target: { value: 'Alice' } });
     fireEvent.click(screen.getByRole('button', { name: /join session/i }));
@@ -191,7 +202,7 @@ describe('ConfirmPageClient', () => {
     expect(await screen.findByText(/session is not ready yet/i)).toBeInTheDocument();
   });
 
-  it('JUSTIFICATION: Existing user with same name → shows "Another user is already using this name."', async () => {
+  it('JUSTIFICATION: Existing user with same name → shows duplicate-name error.', async () => {
     useSearchParamsMock.mockReturnValue({ get: (k: string) => (k === 'session' ? 'LIVE' : null) });
 
     const future = new Date(Date.now() + 60_000).toISOString();
@@ -214,7 +225,7 @@ describe('ConfirmPageClient', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: { id: 99, name: 'Alice' }, error: null }),
-      insert: vi.fn(), // won't be reached
+      insert: vi.fn(), // not reached
     };
 
     setScenario({ sessions, restaurants, users });
@@ -251,7 +262,7 @@ describe('ConfirmPageClient', () => {
       eq: vi.fn().mockReturnThis(),
       // No existing user
       single: vi.fn().mockResolvedValueOnce({ data: null, error: null }),
-      // Insert then .select().single() → return error
+      // Insert → .select().single() → error
       insert: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({ data: null, error: { message: 'bad' } }),

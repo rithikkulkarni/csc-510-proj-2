@@ -5,6 +5,21 @@ import Image from 'next/image';
 import Link from 'next/link';
 import JoinForm from '../components/JoinForm';
 
+/**
+ * Home Page — Landing Screen
+ *
+ * Entry point for the Food Finder app. Provides two primary actions:
+ * - Host creates a new session (navigates into the host onboarding flow)
+ * - Guest joins an existing session using a short join code
+ *
+ * Layout:
+ * - "HOST" card with CTA button linking to `/host/location`
+ * - "JOIN" card with inline <JoinForm />
+ *
+ * @example
+ * // Loaded at /
+ * export default function Home() { ... }
+ */
 export default function Home() {
   return (
     <div className="relative min-h-screen bg-green-100 text-gray-900 flex flex-col items-center px-4 py-8">

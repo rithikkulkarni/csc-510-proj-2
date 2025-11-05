@@ -6,7 +6,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import ResultsPageClient from './ResultsPageClient';
 
-// --- Mocks ---
+/**
+ * Integration/UI Tests — ResultsPageClient
+ *
+ * Verifies end-to-end behavior of results rendering for both SOLO and GROUP modes:
+ * - Handles missing/invalid session code and lookup failures
+ * - Shows expired-session banner when `expires_at` indicates the past
+ * - SOLO mode: validates guardrails and successful rendering of “Top” and “Last” cards
+ * - GROUP mode: aggregates per-user latest votes → ranks restaurants, renders voters/counts
+ * - Catch-all exception path shows a generic fetch error
+ *
+ * Mocks:
+ * - `next/navigation` → `useSearchParams` for query params
+ * - Supabase client → `from(table)` builder with per-table behaviors
+ *
+ * @group integration
+ */
+
+// ---- Helpers: search params mock ----
 const makeSearchParams = (pairs: Record<string, string | number | null | undefined>) => {
   return {
     get: (k: string) => {
@@ -21,6 +38,7 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => useSearchParamsMock(),
 }));
 
+// ---- Supabase builder mock (per-table handlers) ----
 type FromHandlers = {
   sessions?: any;
   restaurants?: any;
@@ -34,6 +52,7 @@ vi.mock('../../../lib/supabaseClient', () => ({
   },
 }));
 
+// Minimal “query chain” scaffold for select/eq/in/single/order calls
 const makeQuery = (
   impls: Partial<{
     select: (arg?: any) => any;
@@ -212,8 +231,7 @@ describe('ResultsPageClient', () => {
         .mockResolvedValue({ data: { id: 12, code: 'S3', mode: 'solo' }, error: null }),
     });
 
-    // NOTE: In SOLO mode, the component pushes raw rows to RestaurantCard (no price_level→price mapping).
-    // Therefore Price will render as "N/A" even if price_level is present in row.
+    // In SOLO mode, raw rows are passed to RestaurantCard (no price mapping), so "Price: N/A"
     const restaurantsRows = [
       {
         id: 1,
@@ -258,7 +276,6 @@ describe('ResultsPageClient', () => {
       'href',
       'https://maps.example/top'
     );
-    // FIX: Expect N/A because r.price is undefined in SOLO path
     expect(within(topCard).getByText(/Price:\s*N\/A/i)).toBeInTheDocument();
     expect(within(topCard).getByText(/Rating:\s*4\.7/i)).toBeInTheDocument();
 
@@ -308,7 +325,7 @@ describe('ResultsPageClient', () => {
       single: vi.fn().mockResolvedValue({ data: sessionRow, error: null }),
     });
 
-    // DESCENDING by created_at (latest first), as Supabase would return
+    // DESC by created_at (latest first) to compute last-vote winner per user
     const votesData = [
       { restaurant_id: 104, user_id: 3, created_at: '2025-11-01T10:05:00Z' }, // latest for user 3
       { restaurant_id: 102, user_id: 2, created_at: '2025-11-01T10:04:00Z' }, // latest for user 2
@@ -401,7 +418,7 @@ describe('ResultsPageClient', () => {
       expect(container.querySelector('.border-amber-700')).toBeTruthy();
     });
 
-    // Function matchers to tolerate line breaks/extra spaces in <h3> text
+    // Helper: match <h3> with flexible whitespace
     const h3ByText = (re: RegExp) =>
       screen.getByText((content, el) => el?.tagName === 'H3' && re.test(el.textContent || ''));
 

@@ -4,6 +4,24 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 import '@testing-library/jest-dom';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 
+/**
+ * Integration/UI Tests — HostLocationPage (flex version)
+ *
+ * What this suite verifies:
+ * - Initial UI state: tip is visible; "Find" is disabled until a map pick occurs.
+ * - Nearby (New) Places fetching: price filtering, dedupe, and rendering of results.
+ * - SOLO flow: inserts a session, inserts restaurants, then navigates to /host/swipe.
+ * - GROUP flow: inserts an expiring session and navigates to confirmation page.
+ *
+ * Mocks:
+ * - next/navigation: `useRouter().push` and `useSearchParams()` for price index.
+ * - next/dynamic & LeafletMap: render a simple clickable mock with onPick callback.
+ * - Supabase client: table-specific insert/select behaviors.
+ * - fetch: Google Places Nearby & Place Details (website) responses.
+ *
+ * @group integration
+ */
+
 // --- Reset between tests ---
 afterEach(() => {
   cleanup();
@@ -24,7 +42,7 @@ function mockNextNavigation(params: Record<string, string | null> = {}) {
   }));
 }
 
-// Dynamic passthrough mock
+// Dynamic passthrough mock (so dynamic(() => import(...)) produces a test double)
 function mockNextDynamicPassthrough() {
   vi.doMock('next/dynamic', () => ({
     __esModule: true,
@@ -37,6 +55,7 @@ function mockNextDynamicPassthrough() {
   }));
 }
 
+// Direct LeafletMap mock (used by the page import)
 function mockLeafletMap() {
   vi.doMock('./parts/LeafletMap', () => ({
     __esModule: true,
@@ -49,7 +68,12 @@ function mockLeafletMap() {
   }));
 }
 
-// Supabase mock builder
+/**
+ * Supabase mock builder
+ *
+ * - sessions.insert(...).select().single(): returns either SOLO or GROUP session rows
+ * - restaurants.insert(...): side-effect hook + success
+ */
 function buildSupabaseMock({
   onInsertSessionSolo,
   onInsertSessionGroup,
@@ -97,7 +121,12 @@ function buildSupabaseMock({
   return { fromMock };
 }
 
-// Places API mock
+/**
+ * Google Places API mock
+ *
+ * - POST searchNearby → returns two places (R One matches “moderate”; R Two has PRICE_LEVEL_UNSPECIFIED)
+ * - Place Details by id → returns website when enabled
+ */
 function mockPlaces({ withWebsite = true } = {}) {
   const fetchSpy = vi.spyOn(global, 'fetch' as any).mockImplementation((url: string) => {
     if (url.includes('searchNearby')) {
@@ -161,10 +190,12 @@ describe('HostLocationPage (flex version)', () => {
     const { default: Page } = await import('./page');
     render(<Page />);
 
+    // Tip present; find button disabled before picking a location
     expect(screen.getByText(/tip/i)).toBeInTheDocument();
     const findBtn = screen.getByRole('button', { name: /find/i });
     expect(findBtn).toBeDisabled();
 
+    // Simulate map pick → button becomes enabled
     fireEvent.click(screen.getByText(/mock-pick/i));
     expect(findBtn).not.toBeDisabled();
   });
@@ -181,9 +212,8 @@ describe('HostLocationPage (flex version)', () => {
     fireEvent.click(screen.getByText(/mock-pick/i));
     fireEvent.click(screen.getByRole('button', { name: /find/i }));
 
-    // R One should appear eventually
+    // "R One" (moderate) should render; "R Two" (unspecified) should be excluded
     await waitFor(() => expect(screen.getByText(/r one/i)).toBeInTheDocument(), { timeout: 5000 });
-
     expect(screen.queryByText(/r two/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Price:\s*\$\$/i)).toBeInTheDocument();
 
@@ -213,6 +243,7 @@ describe('HostLocationPage (flex version)', () => {
       { timeout: 5000 }
     );
 
+    // Ensure both sessions and restaurants tables were used
     expect(fromMock).toHaveBeenCalledWith('sessions');
     expect(fromMock).toHaveBeenCalledWith('restaurants');
   });

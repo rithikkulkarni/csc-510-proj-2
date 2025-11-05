@@ -1,26 +1,55 @@
 'use client';
 
-import React from 'react';
-import { useState, useEffect, useMemo, FormEvent } from 'react';
+import React, { useState, useEffect, useMemo, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
 
+/**
+ * ConfirmPageClient
+ *
+ * Client-side join flow after a host creates a session.
+ * Responsibilities:
+ * - Read `session` code from search params
+ * - Fetch session details from Supabase on mount
+ * - Display expiration info and live countdown if provided
+ * - Allow a participant to enter their name and join the session
+ * - Auto-redirect expired sessions directly to the Results page
+ *
+ * Behavior:
+ * - If the name already exists → prompt user to choose a different display name
+ * - If restaurants are not yet loaded for the session → show “not ready yet” messaging
+ *
+ * Routing outcomes:
+ * ✅ Active session → `/host/swipe?session=<code>&user=<id>`
+ * ✅ Expired session → `/host/results?session=<code>`
+ *
+ * @component
+ */
 export default function ConfirmPageClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialCode = useMemo(() => searchParams.get('session') ?? '', [searchParams]);
 
+  // Cache initial param value → avoid flicker when searchParams updates
+  const initialCode = useMemo(() => searchParams.get('session') ?? '', [searchParams]);
   const [code] = useState(initialCode);
+
   const [name, setName] = useState('');
   const [sessionData, setSessionData] = useState<any>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Expiry tracking
   const [expired, setExpired] = useState(false);
   const [timeLeft, setTimeLeft] = useState('');
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
 
-  // Fetch session
+  /**
+   * Fetch the session row once the code is known.
+   * Handles:
+   * - Missing / invalid session code
+   * - Session not found
+   * - Expired session at time of load
+   */
   useEffect(() => {
     async function fetchSession() {
       if (!code) {
@@ -41,12 +70,12 @@ export default function ConfirmPageClient() {
         return;
       }
 
-      // Convert ends_at to Date (assume UTC from Supabase)
+      // Convert DB timestamp to JS Date (force UTC)
       if (session.ends_at) {
-        const ends = new Date(session.ends_at + 'Z'); // ensure UTC
+        const ends = new Date(session.ends_at + 'Z');
         setExpiresAt(ends);
-        const now = new Date();
-        if (now > ends) {
+
+        if (new Date() > ends) {
           setExpired(true);
           setMessage('This session has expired.');
         }
@@ -58,15 +87,15 @@ export default function ConfirmPageClient() {
     fetchSession();
   }, [code]);
 
-  // Countdown timer
+  /**
+   * Live countdown timer recalculated every second.
+   * Automatically marks expired state when timer reaches zero.
+   */
   useEffect(() => {
     if (!expiresAt) return;
 
-    function updateCountdown() {
-      const now = new Date();
-      if (!expiresAt) return;
-
-      const diff = expiresAt.getTime() - now.getTime();
+    function updateCountdown(ends: Date) {
+      const diff = ends.getTime() - Date.now();
 
       if (diff <= 0) {
         setTimeLeft('Expired');
@@ -75,23 +104,28 @@ export default function ConfirmPageClient() {
         return;
       }
 
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      const hours = Math.floor(diff / 3_600_000);
+      const minutes = Math.floor((diff % 3_600_000) / 60_000);
+      const seconds = Math.floor((diff % 60_000) / 1000);
 
       setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
     }
 
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
+    updateCountdown(expiresAt);
+    const interval = setInterval(() => updateCountdown(expiresAt), 1000);
     return () => clearInterval(interval);
   }, [expiresAt]);
 
+  /**
+   * Submit handler:
+   * - If expired → bypass join and view results immediately
+   * - Validate restaurants exist + name uniqueness
+   * - Insert user into Supabase → navigate to swipe page
+   */
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!sessionData) return;
 
-    // If expired, route to results
     if (expired) {
       router.push(`/host/results?session=${encodeURIComponent(sessionData.code)}`);
       return;
@@ -106,7 +140,6 @@ export default function ConfirmPageClient() {
     setMessage(null);
 
     try {
-      // Check restaurants exist
       const { data: restaurants, error: restError } = await supabase
         .from('restaurants')
         .select('*')
@@ -118,7 +151,6 @@ export default function ConfirmPageClient() {
         return;
       }
 
-      // Check if user name already exists
       const { data: existingUser } = await supabase
         .from('users')
         .select('*')
@@ -132,7 +164,6 @@ export default function ConfirmPageClient() {
         return;
       }
 
-      // Insert new user
       const { data: newUser, error: insertError } = await supabase
         .from('users')
         .insert([{ name: name.trim(), session_id: sessionData.id }])
@@ -145,7 +176,6 @@ export default function ConfirmPageClient() {
         return;
       }
 
-      // Redirect to swipe page
       router.push(
         `/host/swipe?session=${encodeURIComponent(sessionData.code)}&user=${encodeURIComponent(
           newUser.id
@@ -197,6 +227,7 @@ export default function ConfirmPageClient() {
                   })}
                 </span>
               </p>
+
               {!expired && (
                 <p className="text-green-700 font-bold text-xl">Time remaining: {timeLeft}</p>
               )}
@@ -208,10 +239,10 @@ export default function ConfirmPageClient() {
             placeholder="Enter Your Name"
             value={name}
             onChange={(e) => setName(e.target.value.slice(0, 30))}
-            className={`w-full rounded-lg border border-gray-300 bg-white px-5 py-3 text-lg text-black shadow-sm placeholder:text-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-green-300 focus:shadow-lg transition transform duration-200 hover:scale-105
-                       ${expired ? 'bg-gray-200 cursor-not-allowed' : ''}`}
             disabled={expired}
+            className={`w-full rounded-lg border border-gray-300 bg-white px-5 py-3 text-lg text-black shadow-sm placeholder:text-gray-400
+                        focus:outline-none focus:ring-2 focus:ring-green-300 focus:shadow-lg transition transform duration-200 hover:scale-105
+                        ${expired ? 'bg-gray-200 cursor-not-allowed' : ''}`}
           />
 
           <button
