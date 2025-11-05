@@ -1,3 +1,40 @@
+/**
+ * JoinForm Component
+ *
+ * Allows a user to join a session by entering a session code and their name.
+ * Handles both active and expired sessions.
+ *
+ * Props:
+ * - inputClassName?: string — optional Tailwind classes to override default input styling
+ * - buttonClassName?: string — optional Tailwind classes to override default button styling
+ *
+ * State:
+ * - code: string — session code input by the user
+ * - name: string — user's name input
+ * - message: string | null — feedback/error messages displayed below inputs
+ * - loading: boolean — tracks whether an API request is in progress
+ * - sessionExpired: boolean — indicates if the session is expired
+ * - lastRestaurantId: number | null — stores the winning restaurant ID for expired sessions
+ *
+ * Behavior:
+ * - Sanitizes session code input (letters only, uppercase, max 4 chars)
+ * - Validates required fields before submitting
+ * - Queries Supabase to:
+ *     - Verify session existence
+ *     - Check session expiration
+ *     - Fetch restaurants for active sessions
+ *     - Create a new user if one does not exist
+ *     - Compute the last-vote restaurant if session expired
+ * - Navigates to:
+ *     - `/host/swipe` for active sessions
+ *     - `/host/results` for expired sessions
+ *
+ * Notes:
+ * - Uses `useRouter` from Next.js App Router for navigation
+ * - Uses `data-testid` attributes for reliable testing
+ * - Handles API errors gracefully and shows user-friendly messages
+ */
+
 'use client';
 
 import React, { useState, FormEvent } from 'react';
@@ -5,27 +42,10 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
 
 type JoinFormProps = {
-  /** Optional extra classes for the session code & name inputs */
   inputClassName?: string;
-  /** Optional extra classes for the submit button */
   buttonClassName?: string;
 };
 
-/**
- * JoinForm
- *
- * Lets a participant join an active session using a 4-letter code and a display name.
- * If the session is expired, the form switches to a “View Results” mode that derives
- * a “last-vote winner” restaurant (per-user most recent vote) and links to results.
- *
- * UX:
- * - Code is normalized to A–Z, uppercased, max 4 chars.
- * - Name required unless session is expired.
- * - Displays lightweight error messaging on validation/DB errors.
- *
- * @example
- * <JoinForm />
- */
 export default function JoinForm({ inputClassName, buttonClassName }: JoinFormProps) {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -43,7 +63,6 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
     buttonClassName ??
     'w-full rounded-2xl bg-green-800 text-white font-bold text-lg py-4 shadow-md hover:bg-green-900 transition transform duration-150 hover:scale-105';
 
-  // Normalize code to 4 uppercase letters
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const filtered = e.target.value
       .replace(/[^A-Za-z]/g, '')
@@ -53,14 +72,12 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
     setMessage(null);
   };
 
-  // Clamp name length to 30 characters
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value.slice(0, 30));
     setMessage(null);
   };
 
-  // Join active session; if expired, switch to results mode and compute “last-vote winner”
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleJoin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!code) {
       setMessage('Please enter the session code.');
@@ -74,7 +91,6 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
     setLoading(true);
 
     try {
-      // 1) Look up session by code
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
         .select('*')
@@ -87,16 +103,13 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
         return;
       }
 
-      // 2) If expired, compute last-vote winner then allow “View Results”
       if (session.ends_at) {
         const now = new Date();
-        // Ensure consistent UTC comparison; append 'Z' if backend stores naive UTC
         const endsAt = new Date(session.ends_at + 'Z');
-        if (now > endsAt) {
+        if (now >= endsAt) {
           setMessage('This session has expired.');
           setSessionExpired(true);
 
-          // Pull all votes, newest first, then take each user's most recent vote
           const { data: votesData } = await supabase
             .from('votes')
             .select('restaurant_id, user_id, created_at')
@@ -104,18 +117,16 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
             .order('created_at', { ascending: false });
 
           if (votesData && votesData.length > 0) {
-            const lastVoteMap: Record<number, number> = {}; // user_id -> restaurant_id (latest only)
+            const lastVoteMap: Record<number, number> = {};
             votesData.forEach((v) => {
               if (!lastVoteMap[v.user_id]) lastVoteMap[v.user_id] = v.restaurant_id;
             });
 
-            // Count per-restaurant last-votes
             const countMap: Record<number, number> = {};
             Object.values(lastVoteMap).forEach((rid) => {
               countMap[rid] = (countMap[rid] || 0) + 1;
             });
 
-            // Winner = restaurant with highest last-vote count (ties: first by sort order)
             const sorted = Object.entries(countMap)
               .sort(([, a], [, b]) => b - a)
               .map(([rid]) => Number(rid));
@@ -128,7 +139,6 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
         }
       }
 
-      // 3) Session is active — ensure restaurants have been seeded for this session
       const { data: restaurants, error: restError } = await supabase
         .from('restaurants')
         .select('*')
@@ -140,7 +150,6 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
         return;
       }
 
-      // 4) Upsert user by (session_id, name)
       let { data: user } = await supabase
         .from('users')
         .select('*')
@@ -163,7 +172,6 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
         user = newUser;
       }
 
-      // 5) Navigate to swiping screen
       router.push(`/host/swipe?session=${encodeURIComponent(session.code)}&user=${user.id}`);
     } catch (err: any) {
       console.error('Error joining session:', err);
@@ -180,12 +188,12 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={handleJoin}
       className="flex flex-col w-full gap-4 bg-yellow-50 p-6 rounded-2xl transition-all duration-150"
     >
-      {/* Name input (hidden when session is expired) */}
       {!sessionExpired && (
         <input
+          data-testid="join-name-input"
           name="name"
           type="text"
           placeholder="Enter Your Name"
@@ -196,7 +204,7 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
       )}
 
       <input
-        data-testid="join-input"
+        data-testid="join-code-input"
         name="code"
         type="text"
         placeholder="Enter Session Code"
@@ -206,7 +214,8 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
         className={inputClasses}
       />
 
-      {!sessionExpired ? (
+      {/* Join Button */}
+      {!sessionExpired && (
         <button
           data-testid="join-button"
           type="submit"
@@ -215,11 +224,15 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
         >
           {loading ? 'Joining...' : 'Join Session'}
         </button>
-      ) : (
+      )}
+
+      {/* View Results Button */}
+      {sessionExpired && (
         <button
-          data-testid="join-button"
+          data-testid="view-results-button"
           type="button"
           onClick={handleViewResults}
+          disabled={loading}
           className={`${buttonClasses} bg-gray-500 hover:bg-gray-600`}
         >
           View Results
