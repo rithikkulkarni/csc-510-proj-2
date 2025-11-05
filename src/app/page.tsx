@@ -106,7 +106,7 @@ export default function Home() {
                 textShadow: `
             0 0 8px rgba(203, 241, 195, 0.5),
             0 0 12px rgba(203, 241, 195, 0.3)
-          `
+          `,
               }}
             >
               FOOD FINDER
@@ -128,13 +128,7 @@ export default function Home() {
         {/* HOST card */}
         <div className="flex flex-col items-center bg-white rounded-3xl p-8 border-2 border-green-300 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02]">
           <div className="relative h-36 w-36 mb-6 rounded-full overflow-hidden border-4 border-green-300 shadow-inner">
-            <Image
-              src="/host.png"
-              alt="Host"
-              fill
-              className="object-cover"
-              priority
-            />
+            <Image src="/host.png" alt="Host" fill className="object-cover" priority />
           </div>
 
           <h2 className="text-2xl font-bold text-green-800 mb-2">🧑‍🤝‍🧑 Host a Session</h2>

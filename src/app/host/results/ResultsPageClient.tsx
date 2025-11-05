@@ -486,15 +486,15 @@ export default function ResultsPageClient() {
             const r = topData?.find((t) => t.id === id);
             return r
               ? {
-                id: r.id,
-                name: r.name,
-                address: r.address,
-                website: r.website,
-                maps_uri: r.maps_uri,
-                rating: r.rating,
-                price: r.price_level,
-                votes: voteCounts[r.id] || 0,
-              }
+                  id: r.id,
+                  name: r.name,
+                  address: r.address,
+                  website: r.website,
+                  maps_uri: r.maps_uri,
+                  rating: r.rating,
+                  price: r.price_level,
+                  votes: voteCounts[r.id] || 0,
+                }
               : null;
           })
           .filter(Boolean) as Restaurant[];
@@ -606,20 +606,29 @@ export default function ResultsPageClient() {
           <Image src="/logo.png" alt="Logo" width={40} height={40} className="animate-float" />
         </div>
         <div className="flex flex-col items-start gap-0">
-          <h1 className="text-lg font-extrabold uppercase text-green-800" style={{ lineHeight: '1', textShadow: '0 0 2px rgba(203,241,195,0.5),0 0 4px rgba(203,241,195,0.3)' }}>
+          <h1
+            className="text-lg font-extrabold uppercase text-green-800"
+            style={{
+              lineHeight: '1',
+              textShadow: '0 0 2px rgba(203,241,195,0.5),0 0 4px rgba(203,241,195,0.3)',
+            }}
+          >
             FOOD FINDER
           </h1>
-          <p className="text-[8px] font-semibold text-gray-700 mt-0" style={{ lineHeight: '0.95', textShadow: '1px 1px 1px rgba(0,0,0,0.1)' }}>
-            DECISIONS ARE HARD.<br />EATING TOGETHER SHOULDN'T BE.
+          <p
+            className="text-[8px] font-semibold text-gray-700 mt-0"
+            style={{ lineHeight: '0.95', textShadow: '1px 1px 1px rgba(0,0,0,0.1)' }}
+          >
+            DECISIONS ARE HARD.
+            <br />
+            EATING TOGETHER SHOULDN'T BE.
           </p>
         </div>
       </div>
 
       {/* Page Header */}
       <header className="relative z-10 mb-12 text-center w-full">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-green-800">
-          Choose Your Favorite
-        </h1>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-green-800">Choose Your Favorite</h1>
         <p className="text-lg md:text-xl font-bold text-gray-700 mt-2">
           Pick your preferred option or skip if it's too tough!
         </p>
@@ -673,7 +682,6 @@ export default function ResultsPageClient() {
     </div>
   );
 
-
   function RestaurantCard({
     r,
     rankBorder,
@@ -685,8 +693,9 @@ export default function ResultsPageClient() {
   }) {
     return (
       <div
-        className={`p-4 rounded-2xl shadow-md bg-white flex flex-col gap-2 relative transition-transform duration-150 hover:-translate-y-1 hover:scale-[1.02] ${uniformBorder ? 'border-2 border-gray-300' : rankBorder || ''
-          }`}
+        className={`p-4 rounded-2xl shadow-md bg-white flex flex-col gap-2 relative transition-transform duration-150 hover:-translate-y-1 hover:scale-[1.02] ${
+          uniformBorder ? 'border-2 border-gray-300' : rankBorder || ''
+        }`}
       >
         {r.votes !== undefined && (
           <div className="absolute top-2 right-4 font-bold text-green-900">Votes: {r.votes}</div>

@@ -63,6 +63,9 @@ export default function ConfirmPageClient() {
     if (!expiresAt) return;
 
     function updateCountdown() {
+      // guard again to be 100% type-safe
+      if (!expiresAt) return;
+
       const now = new Date();
       const diff = expiresAt.getTime() - now.getTime();
 
@@ -169,20 +172,29 @@ export default function ConfirmPageClient() {
           <Image src="/logo.png" alt="Logo" width={40} height={40} className="animate-float" />
         </div>
         <div className="flex flex-col items-start gap-0">
-          <h1 className="text-lg font-extrabold uppercase text-green-800" style={{ lineHeight: '1', textShadow: '0 0 2px rgba(203,241,195,0.5),0 0 4px rgba(203,241,195,0.3)' }}>
+          <h1
+            className="text-lg font-extrabold uppercase text-green-800"
+            style={{
+              lineHeight: '1',
+              textShadow: '0 0 2px rgba(203,241,195,0.5),0 0 4px rgba(203,241,195,0.3)',
+            }}
+          >
             FOOD FINDER
           </h1>
-          <p className="text-[8px] font-semibold text-gray-700 mt-0" style={{ lineHeight: '0.95', textShadow: '1px 1px 1px rgba(0,0,0,0.1)' }}>
-            DECISIONS ARE HARD.<br />EATING TOGETHER SHOULDN'T BE.
+          <p
+            className="text-[8px] font-semibold text-gray-700 mt-0"
+            style={{ lineHeight: '0.95', textShadow: '1px 1px 1px rgba(0,0,0,0.1)' }}
+          >
+            DECISIONS ARE HARD.
+            <br />
+            EATING TOGETHER SHOULDN'T BE.
           </p>
         </div>
       </div>
 
       {/* Page Header */}
       <header className="relative z-10 mb-12 text-center w-full">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-green-800">
-          Session Created!
-        </h1>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-green-800">Session Created!</h1>
         <p className="text-lg md:text-xl font-bold text-gray-700 mt-2">
           Share This Code With Your Friends to Start Choosing
         </p>
@@ -238,10 +250,11 @@ export default function ConfirmPageClient() {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full ${expired
-              ? 'bg-white hover:bg-white cursor-not-allowed'
-              : 'bg-green-800 hover:bg-green-900'
-              } text-white font-bold py-3 px-6 rounded-2xl shadow-md transition transform duration-150 hover:scale-105 cursor-pointer`}
+            className={`w-full ${
+              expired
+                ? 'bg-white hover:bg-white cursor-not-allowed'
+                : 'bg-green-800 hover:bg-green-900'
+            } text-white font-bold py-3 px-6 rounded-2xl shadow-md transition transform duration-150 hover:scale-105 cursor-pointer`}
           >
             {loading ? 'Joining...' : expired ? 'View Results' : 'Join Session'}
           </button>

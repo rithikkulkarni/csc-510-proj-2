@@ -37,7 +37,9 @@ export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place
   const [leaderIdx, setLeaderIdx] = useState(0);
   const [cursor, setCursor] = useState(1);
   const [error, setError] = useState<string | null>(null);
-  const [sessionMode, setSessionMode] = useState<'solo' | 'group'>(soloRestaurants ? 'solo' : 'group');
+  const [sessionMode, setSessionMode] = useState<'solo' | 'group'>(
+    soloRestaurants ? 'solo' : 'group'
+  );
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState('');
 
@@ -216,19 +218,28 @@ export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place
           <Image src="/logo.png" alt="Logo" width={40} height={40} className="animate-float" />
         </div>
         <div className="flex flex-col items-start gap-0">
-          <h1 className="text-lg font-extrabold uppercase text-green-800" style={{ lineHeight: '1', textShadow: '0 0 2px rgba(203,241,195,0.5),0 0 4px rgba(203,241,195,0.3)' }}>
+          <h1
+            className="text-lg font-extrabold uppercase text-green-800"
+            style={{
+              lineHeight: '1',
+              textShadow: '0 0 2px rgba(203,241,195,0.5),0 0 4px rgba(203,241,195,0.3)',
+            }}
+          >
             FOOD FINDER
           </h1>
-          <p className="text-[8px] font-semibold text-gray-700 mt-0" style={{ lineHeight: '0.95', textShadow: '1px 1px 1px rgba(0,0,0,0.1)' }}>
-            DECISIONS ARE HARD.<br />EATING TOGETHER SHOULDN'T BE.
+          <p
+            className="text-[8px] font-semibold text-gray-700 mt-0"
+            style={{ lineHeight: '0.95', textShadow: '1px 1px 1px rgba(0,0,0,0.1)' }}
+          >
+            DECISIONS ARE HARD.
+            <br />
+            EATING TOGETHER SHOULDN'T BE.
           </p>
         </div>
       </div>
 
       <header className="relative z-10 mb-12 text-center w-full">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-green-800">
-          Choose Your Favorite
-        </h1>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-green-800">Choose Your Favorite</h1>
         <p className="text-lg md:text-xl font-bold text-gray-700 mt-2">
           Pick your preferred option or skip if it's too tough!
         </p>
@@ -282,7 +293,7 @@ export default function SwipePage({ soloRestaurants }: { soloRestaurants?: Place
           <div className="mt-4">© {new Date().getFullYear()} Food Finder</div>
         </footer>
       </div>
-    </div >
+    </div>
   );
 }
 
@@ -300,12 +311,22 @@ function RestaurantCard({ place, onChoose }: { place: Place; onChoose: () => voi
       </div>
       <div className="mt-1 flex flex-wrap gap-2 text-sm">
         {place.website && (
-          <a href={place.website} target="_blank" rel="noreferrer" className="text-green-700 underline">
+          <a
+            href={place.website}
+            target="_blank"
+            rel="noreferrer"
+            className="text-green-700 underline"
+          >
             Website
           </a>
         )}
         {place.mapsUri && (
-          <a href={place.mapsUri} target="_blank" rel="noreferrer" className="text-green-700 underline">
+          <a
+            href={place.mapsUri}
+            target="_blank"
+            rel="noreferrer"
+            className="text-green-700 underline"
+          >
             Google Maps
           </a>
         )}

@@ -108,13 +108,12 @@ export default function HostLocationPage() {
               textShadow: '1px 1px 1px rgba(0,0,0,0.1)',
             }}
           >
-            DECISIONS ARE HARD.<br />
+            DECISIONS ARE HARD.
+            <br />
             EATING TOGETHER SHOULDN'T BE.
           </p>
         </div>
       </div>
-
-
 
       {/* Title Header */}
       <header className="relative z-10 mb-12 text-center w-full">
@@ -149,8 +148,6 @@ export default function HostLocationPage() {
         </div>
         <div className="mt-4">© {new Date().getFullYear()} Food Finder</div>
       </footer>
-
-
     </div>
   );
 }
@@ -278,7 +275,9 @@ function HostLocationInner() {
         _priceIdx: toPriceIndex(p.priceLevel),
       });
     }
-    return selectedPriceIdx == null ? batch : batch.filter((pl) => pl._priceIdx === selectedPriceIdx);
+    return selectedPriceIdx == null
+      ? batch
+      : batch.filter((pl) => pl._priceIdx === selectedPriceIdx);
   }
 
   function persistLastSearch(currentResults: Place[]) {
@@ -292,7 +291,7 @@ function HostLocationInner() {
         savedAt: Date.now(),
       };
       sessionStorage.setItem(LAST_SEARCH_KEY, JSON.stringify(payload));
-    } catch { }
+    } catch {}
   }
 
   async function sweepTiles({ reset = true }: { reset?: boolean } = {}) {
@@ -330,12 +329,15 @@ function HostLocationInner() {
 
   const generateSessionCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    return Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    return Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join(
+      ''
+    );
   };
 
   // --- Swipe & Confirm ---
   async function goToSwipe() {
-    if (!picked || results.length === 0) return setError(!picked ? 'Pick a point first' : 'Find restaurants first');
+    if (!picked || results.length === 0)
+      return setError(!picked ? 'Pick a point first' : 'Find restaurants first');
     setError(null);
 
     let session: any = null;
@@ -380,7 +382,8 @@ function HostLocationInner() {
   }
 
   async function goToConfirmPage() {
-    if (!picked || results.length === 0) return setError(!picked ? 'Pick a point first' : 'Find restaurants first');
+    if (!picked || results.length === 0)
+      return setError(!picked ? 'Pick a point first' : 'Find restaurants first');
     setError(null);
 
     let session: any = null;
@@ -444,19 +447,21 @@ function HostLocationInner() {
           {/* Mode Buttons */}
           <div className="flex gap-2">
             <button
-              className={`flex-1 py-2 rounded-md font-medium ${mode === 'solo'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-200 text-gray-700 cursor-pointer hover:scale-105'
-                }`}
+              className={`flex-1 py-2 rounded-md font-medium ${
+                mode === 'solo'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 text-gray-700 cursor-pointer hover:scale-105'
+              }`}
               onClick={() => setMode('solo')}
             >
               Solo
             </button>
             <button
-              className={`flex-1 py-2 rounded-md font-medium ${mode === 'group'
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-200 text-gray-700 cursor-pointer hover:scale-105'
-                }`}
+              className={`flex-1 py-2 rounded-md font-medium ${
+                mode === 'group'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-200 text-gray-700 cursor-pointer hover:scale-105'
+              }`}
               onClick={() => setMode('group')}
             >
               Group
@@ -511,17 +516,16 @@ function HostLocationInner() {
 
           {/* Tip */}
           {!picked && (
-            <p className="text-sm text-gray-500 mt-2">
-              Tip: click the map to set the center.
-            </p>
+            <p className="text-sm text-gray-500 mt-2">Tip: click the map to set the center.</p>
           )}
 
           {/* Find Restaurants Button */}
           <button
             onClick={() => sweepTiles({ reset: true })}
             disabled={!isFindEnabled}
-            className={`w-full mt-3 py-2 rounded-md bg-blue-600 text-white disabled:opacity-50 ${isFindEnabled ? 'cursor-pointer' : ''
-              }`}
+            className={`w-full mt-3 py-2 rounded-md bg-blue-600 text-white disabled:opacity-50 ${
+              isFindEnabled ? 'cursor-pointer' : ''
+            }`}
           >
             {loading ? 'Searching…' : 'Find Restaurants'}
           </button>
@@ -531,8 +535,9 @@ function HostLocationInner() {
             <button
               onClick={goToSwipe}
               disabled={!canSwipe}
-              className={`w-full mt-2 py-2 rounded-md bg-green-600 text-white disabled:opacity-50 ${canSwipe ? 'cursor-pointer' : ''
-                }`}
+              className={`w-full mt-2 py-2 rounded-md bg-green-600 text-white disabled:opacity-50 ${
+                canSwipe ? 'cursor-pointer' : ''
+              }`}
             >
               Start Swiping
             </button>
@@ -541,8 +546,9 @@ function HostLocationInner() {
             <button
               onClick={goToConfirmPage}
               disabled={!canCreate}
-              className={`w-full mt-2 py-2 rounded-md bg-purple-600 text-white disabled:opacity-50 ${canCreate ? 'cursor-pointer' : ''
-                }`}
+              className={`w-full mt-2 py-2 rounded-md bg-purple-600 text-white disabled:opacity-50 ${
+                canCreate ? 'cursor-pointer' : ''
+              }`}
             >
               Create Session
             </button>
@@ -592,7 +598,9 @@ function HostLocationInner() {
               </li>
             ))}
             {!loading && results.length === 0 && hasSearched && (
-              <li className="text-sm text-red-600">No restaurants found that match your search criteria.</li>
+              <li className="text-sm text-red-600">
+                No restaurants found that match your search criteria.
+              </li>
             )}
             {!loading && results.length === 0 && !hasSearched && (
               <li className="text-sm text-gray-500">
@@ -604,11 +612,4 @@ function HostLocationInner() {
       </div>
     </div>
   );
-
-
 }
-
-
-
-
-
