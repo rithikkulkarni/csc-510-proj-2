@@ -4,10 +4,24 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { describe, it, expect, vi } from 'vitest';
 
-// Import the page and the named export we want to assert
+// Import the page component + named export for prerender config
 import ResultsPage, { dynamic } from './page';
 
-// Mock the child component ResultsPageClient to render immediately (no suspension)
+/**
+ * Unit Test — Results Page Wrapper (Suspense + dynamic config)
+ *
+ * Purpose:
+ * ✅ Ensures the top-level results page renders the client component
+ * ✅ Verifies Suspense is present and fallback logic behaves correctly during tests
+ * ✅ Tests `dynamic = "force-dynamic"` export to ensure dynamic rendering
+ *    (required due to use of searchParams + runtime DB queries)
+ *
+ * Child component (`ResultsPageClient`) is mocked to avoid data fetching + suspense during testing.
+ *
+ * @group unit
+ */
+
+// Mock client-side results component to prevent actual suspense + DB calls
 vi.mock('./ResultsPageClient', () => ({
   __esModule: true,
   default: vi.fn(() => <div data-testid="mock-client">Client Loaded</div>),
@@ -15,21 +29,21 @@ vi.mock('./ResultsPageClient', () => ({
 
 describe('ResultsPage', () => {
   it(`
-  JUSTIFICATION: Renders the page and includes the child inside Suspense.
-  Since the child does not suspend in tests, the fallback isn't shown; we assert the child.
+  JUSTIFICATION: Renders the page and includes the client child.
+  Fallback is skipped because the child mock does not suspend.
   `, () => {
     render(<ResultsPage />);
 
-    // Child renders immediately (no suspension)
+    // ✅ Mocked client component should be visible
     expect(screen.getByTestId('mock-client')).toBeInTheDocument();
 
-    // Fallback is not expected because the child didn't suspend
+    // ✅ Suspense fallback text is not shown
     expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
   });
 
   it(`
-  JUSTIFICATION: Confirms the dynamic export disables static prerender.
-  Covers the configuration line.
+  JUSTIFICATION: Confirms dynamic rendering configuration
+  to avoid static prerendering on a data-dependent route.
   `, () => {
     expect(dynamic).toBe('force-dynamic');
   });
