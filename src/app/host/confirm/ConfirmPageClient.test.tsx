@@ -114,7 +114,7 @@ describe('ConfirmPageClient', () => {
 
     render(<ConfirmPageClient />);
 
-    await screen.findByRole('heading', { name: /session confirmed/i });
+    await screen.findByRole('heading', { name: /session created/i });
 
     expect(screen.getByDisplayValue('ABC')).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/enter your name/i)).toBeDisabled();

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useState, useEffect, useMemo, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -73,12 +74,11 @@ export default function ConfirmPageClient() {
   useEffect(() => {
     if (!expiresAt) return;
 
-    function updateCountdown() {
-      // guard again to be 100% type-safe
-      if (!expiresAt) return;
+    const target = expiresAt; // local copy, definitely not null
 
+    function updateCountdown() {
       const now = new Date();
-      const diff = expiresAt.getTime() - now.getTime();
+      const diff = target.getTime() - now.getTime();
 
       if (diff <= 0) {
         setTimeLeft('Expired');
@@ -94,8 +94,8 @@ export default function ConfirmPageClient() {
       setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
     }
 
-    updateCountdown(expiresAt);
-    const interval = setInterval(() => updateCountdown(expiresAt), 1000);
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
   }, [expiresAt]);
 
@@ -263,19 +263,18 @@ export default function ConfirmPageClient() {
                        focus:outline-none focus:ring-2 focus:ring-green-400 focus:shadow-lg transition transform duration-200 hover:scale-105
                        ${expired ? 'bg-gray-200 cursor-not-allowed' : ''}`}
             disabled={expired}
-            className={`w-full rounded-lg border border-gray-300 bg-white px-5 py-3 text-lg text-black shadow-sm placeholder:text-gray-400
-                        focus:outline-none focus:ring-2 focus:ring-green-300 focus:shadow-lg transition transform duration-200 hover:scale-105
-                        ${expired ? 'bg-gray-200 cursor-not-allowed' : ''}`}
+          // className={`w-full rounded-lg border border-gray-300 bg-white px-5 py-3 text-lg text-black shadow-sm placeholder:text-gray-400
+          //             focus:outline-none focus:ring-2 focus:ring-green-300 focus:shadow-lg transition transform duration-200 hover:scale-105
+          //             ${expired ? 'bg-gray-200 cursor-not-allowed' : ''}`}
           />
 
           <button
             type="submit"
             disabled={loading}
-            className={`w-full ${
-              expired
+            className={`w-full ${expired
                 ? 'bg-white hover:bg-white cursor-not-allowed'
                 : 'bg-green-800 hover:bg-green-900'
-            } text-white font-bold py-3 px-6 rounded-2xl shadow-md transition transform duration-150 hover:scale-105 cursor-pointer`}
+              } text-white font-bold py-3 px-6 rounded-2xl shadow-md transition transform duration-150 hover:scale-105 cursor-pointer`}
           >
             {loading ? 'Joining...' : expired ? 'View Results' : 'Join Session'}
           </button>

@@ -188,7 +188,7 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={handleJoin}
       className="flex flex-col w-full gap-4 bg-white p-6 rounded-2xl transition-all duration-150"
     >
       {!sessionExpired && (
@@ -234,7 +234,6 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
           onClick={handleViewResults}
           className={`w-full mt-2 rounded-2xl bg-yellow-400 text-green-900 font-bold text-lg py-4 shadow-md border border-yellow-500 hover:bg-yellow-300 active:scale-95 transition-transform duration-150 flex items-center justify-center gap-2 ${buttonClassName ?? ''}`}
           disabled={loading}
-          className={`${buttonClasses} bg-gray-500 hover:bg-gray-600`}
         >
           View Results
         </button>

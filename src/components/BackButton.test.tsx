@@ -4,7 +4,6 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { BackButton } from './BackButton';
 
-// ✅ No mocks needed — new version just uses next/link
 describe('BackButton', () => {
   it('renders the Return Home link', () => {
     render(<BackButton />);

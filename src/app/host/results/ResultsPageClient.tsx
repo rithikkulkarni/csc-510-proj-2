@@ -508,15 +508,15 @@ export default function ResultsPageClient() {
             const r = topData?.find((t) => t.id === id);
             return r
               ? {
-                  id: r.id,
-                  name: r.name,
-                  address: r.address,
-                  website: r.website,
-                  maps_uri: r.maps_uri,
-                  rating: r.rating,
-                  price: r.price_level,
-                  votes: voteCounts[r.id] || 0,
-                }
+                id: r.id,
+                name: r.name,
+                address: r.address,
+                website: r.website,
+                maps_uri: r.maps_uri,
+                rating: r.rating,
+                price: r.price_level,
+                votes: voteCounts[r.id] || 0,
+              }
               : null;
           })
           .filter(Boolean) as Restaurant[];
@@ -525,7 +525,7 @@ export default function ResultsPageClient() {
         const rankedTopRestaurants = topRestaurants.map((r, idx) => ({ ...r, rank: idx + 1 }));
 
         setTopRestaurants(rankedTopRestaurants);
-        const lastVoteMap: Record<number, number> = {};
+
         // “Last Man Standing”: newest vote per user, then tally by restaurant
         const lastVoteMap: Record<number, number> = {}; // user_id -> restaurant_id
         votesData.forEach((v) => {
@@ -656,10 +656,7 @@ export default function ResultsPageClient() {
 
       {/* Page Header */}
       <header className="relative z-10 mb-12 text-center w-full">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-green-800">Choose Your Favorite</h1>
-        <p className="text-lg md:text-xl font-bold text-gray-700 mt-2">
-          Pick your preferred option or skip if it's too tough!
-        </p>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-green-800">Results</h1>
       </header>
 
       {/* Top Voted & Last Man Standing Sections */}
@@ -668,7 +665,7 @@ export default function ResultsPageClient() {
         {topRestaurants.length > 0 && (
           <section className="rounded-3xl p-6 bg-white shadow-md hover:shadow-xl transition duration-200">
             <h2 className="text-2xl font-bold text-green-800 mb-4 text-center border-b-4 border-green-300 pb-2 w-3/4 mx-auto">
-              Top Voted
+              Top Voted Restaurants
             </h2>
             <div className="flex flex-col md:flex-row gap-4 justify-center">
               {topRestaurants.map((r, index) => (
@@ -721,9 +718,8 @@ export default function ResultsPageClient() {
   }) {
     return (
       <div
-        className={`p-4 rounded-2xl shadow-md bg-white flex flex-col gap-2 relative transition-transform duration-150 hover:-translate-y-1 hover:scale-[1.02] ${
-          uniformBorder ? 'border-2 border-gray-300' : rankBorder || ''
-        }`}
+        className={`p-4 rounded-2xl shadow-md bg-white flex flex-col gap-2 relative transition-transform duration-150 hover:-translate-y-1 hover:scale-[1.02] ${uniformBorder ? 'border-2 border-gray-300' : rankBorder || ''
+          }`}
       >
         {r.votes !== undefined && (
           <div className="absolute top-2 right-4 font-bold text-green-900">Votes: {r.votes}</div>

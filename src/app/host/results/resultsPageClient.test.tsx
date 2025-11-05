@@ -263,7 +263,7 @@ describe('ResultsPageClient', () => {
       expect(screen.getByRole('heading', { name: /results/i })).toBeInTheDocument()
     );
 
-    await screen.findByRole('heading', { name: /top choice/i });
+    await screen.findByRole('heading', { name: /top voted/i });
     await screen.findByRole('heading', { name: /last man standing/i });
 
     const topCard = screen.getByText(/Top Place/).closest('div')!;
@@ -406,7 +406,7 @@ describe('ResultsPageClient', () => {
     const { container } = render(<ResultsPageClient />);
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { name: /group results/i })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /results/i })).toBeInTheDocument()
     );
 
     await screen.findByRole('heading', { name: /top voted restaurants/i });

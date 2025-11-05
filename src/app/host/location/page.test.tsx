@@ -266,7 +266,9 @@ describe('HostLocationPage (flex version)', () => {
     await waitFor(() => expect(screen.getByText(/r one/i)).toBeInTheDocument(), { timeout: 15000 });
 
     fireEvent.click(screen.getByRole('button', { name: /group/i }));
-    fireEvent.change(screen.getByLabelText(/expiration/i), { target: { value: '3' } });
+    const expiryInput = screen.getByTestId('expiry-input');
+    fireEvent.change(expiryInput, { target: { value: 4 } });
+
 
     fireEvent.click(screen.getByRole('button', { name: /create/i }));
 
