@@ -49,26 +49,23 @@ function makeReq(body: any, url = 'http://localhost/api/sessions') {
 // Deterministic code generator: A, B, C, D...
 function mockCryptoSequence() {
   // A type-compatible mock for the overloaded Web Crypto API
-  const getRandomValuesMock = vi.fn(
-    <T extends ArrayBufferView | null>(array: T): T => {
-      if (array) {
-        // Create a Uint8Array view over the same underlying buffer
-        const u8 = new Uint8Array(
-          array.buffer,
-          (array as any).byteOffset ?? 0,
-          (array as any).byteLength ?? (array as any).length ?? 0
-        );
-        // Fill 0,1,2,... so code -> "ABCD"
-        for (let i = 0; i < u8.length; i++) u8[i] = i;
-      }
-      return array;
+  const getRandomValuesMock = vi.fn(<T extends ArrayBufferView | null>(array: T): T => {
+    if (array) {
+      // Create a Uint8Array view over the same underlying buffer
+      const u8 = new Uint8Array(
+        array.buffer,
+        (array as any).byteOffset ?? 0,
+        (array as any).byteLength ?? (array as any).length ?? 0
+      );
+      // Fill 0,1,2,... so code -> "ABCD"
+      for (let i = 0; i < u8.length; i++) u8[i] = i;
     }
-  );
+    return array;
+  });
 
   // Install a global crypto with our mock; avoids spy type issues
   vi.stubGlobal('crypto', { getRandomValues: getRandomValuesMock } as any);
 }
-
 
 beforeEach(() => {
   insertedRow = null;
