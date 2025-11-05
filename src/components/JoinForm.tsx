@@ -189,7 +189,7 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
   return (
     <form
       onSubmit={handleJoin}
-      className="flex flex-col w-full gap-4 bg-yellow-50 p-6 rounded-2xl transition-all duration-150"
+      className="flex flex-col w-full gap-4 bg-white p-6 rounded-2xl transition-all duration-150"
     >
       {!sessionExpired && (
         <input
@@ -220,7 +220,7 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
           data-testid="join-button"
           type="submit"
           disabled={loading}
-          className={buttonClasses}
+          className={`w-full mt-2 rounded-2xl bg-green-700 text-white font-bold text-lg py-4 shadow-md hover:shadow-lg hover:bg-green-800 active:scale-95 transition-transform duration-150 ${buttonClassName ?? ''}`}
         >
           {loading ? 'Joining...' : 'Join Session'}
         </button>
@@ -232,8 +232,8 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
           data-testid="view-results-button"
           type="button"
           onClick={handleViewResults}
+          className={`w-full mt-2 rounded-2xl bg-yellow-400 text-green-900 font-bold text-lg py-4 shadow-md border border-yellow-500 hover:bg-yellow-300 active:scale-95 transition-transform duration-150 flex items-center justify-center gap-2 ${buttonClassName ?? ''}`}
           disabled={loading}
-          className={`${buttonClasses} bg-gray-500 hover:bg-gray-600`}
         >
           View Results
         </button>

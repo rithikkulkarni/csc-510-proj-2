@@ -1,4 +1,5 @@
-'use client';
+// ./src/app/host/swipe/page.tsx
+'use client'; // optional here if you want full client behavior; normally not needed for Suspense wrapper
 
 //import { Suspense } from 'react';
 import React, { Suspense } from 'react';

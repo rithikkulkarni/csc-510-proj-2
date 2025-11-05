@@ -123,8 +123,9 @@ describe('Home Page', () => {
   test('renders HOST and JOIN cards', () => {
     render(<Home />);
 
-    expect(screen.getByText('HOST')).toBeInTheDocument();
-    expect(screen.getByText('JOIN')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Host/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Join/i })).toBeInTheDocument();
+
     expect(screen.getByText('Create Session')).toBeInTheDocument();
 
     expect(screen.getByTestId('join-button')).toBeInTheDocument();

@@ -12,11 +12,13 @@ Project 2 repository for CSC 510 - Fall 2025
 How to get this running:
 
 ## Developer Handbook
+
 > This section is designed to explain linting, formatting, testing, and coverage for this project using ESLint, Prettier, and Vitest/React Testing Library.
 
 ---
 
 ### Prerequisites (Quick Start)
+
 ```bash
 git clone https://github.com/rithikkulkarni/csc-510-proj-2.git
 cd csc-510-proj-2/starter
@@ -31,13 +33,17 @@ npm run dev
 This project uses **ESLint** to enforce code quality rules and **Prettier** to keep formatting consistent. Prettier is integrated via ESLint so you get one place to see issues.
 
 #### Install/verify dependencies
+
 If any are missing, install:
+
 ```bash
 npm i -D eslint prettier eslint-config-next eslint-config-prettier eslint-plugin-prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser
 ```
 
 #### Recommended config files for ESLint & Prettier
+
 **`eslint.config.mjs`**
+
 ```js
 import next from 'eslint-config-next';
 import eslintConfigPrettier from 'eslint-config-prettier'; // disables rules that conflict with Prettier
@@ -71,6 +77,7 @@ export default config;
 ```
 
 **`.prettierrc.json`**
+
 ```json
 {
   "singleQuote": true,
@@ -82,6 +89,7 @@ export default config;
 ```
 
 #### How to lint your code
+
 ```bash
 # Run Lint checker (this has prettier integrated into its checks, even though Prettier has its own workflow as well called 'format')
 npm run lint
@@ -90,6 +98,7 @@ npx eslint . --fix
 ```
 
 **Suggested `package.json` scripts**
+
 ```json
 {
   "scripts": {
@@ -111,12 +120,15 @@ npx eslint . --fix
 This project uses **Vitest** for unit and integration testing, alongside **React Testing library** for component rendering and DOM assertions.
 
 #### Install/verify test dependencies
+
 ```bash
 npm i -D vitest jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event
 ```
 
 #### Suggested Vitest Config Files
+
 **`vitest.config.ts`**
+
 ```ts
 import { defineConfig } from 'vitest/config';
 import dotenv from 'dotenv';
@@ -157,6 +169,7 @@ export default defineConfig({
 ```
 
 **`vitest.setup.ts`**
+
 ```ts
 // vitest.setup.ts
 // This file runs before every test file — define global mocks & utilities here.
@@ -176,11 +189,12 @@ vi.mock('next/font/google', () => ({
   Geist: () => ({ variable: 'font-geist-sans' }),
   Geist_Mono: () => ({ variable: 'font-geist-mono' }),
 }));
-
 ```
 
 #### Example test
+
 **`src/__tests__/Home.test.tsx`**
+
 ```tsx
 import { render, screen } from '@testing-library/react';
 import Home from '@/pages/index';
@@ -192,7 +206,9 @@ test('renders a heading', () => {
 ```
 
 #### Test scripts
+
 Add to `package.json`:
+
 ```json
 {
   "scripts": {
@@ -202,7 +218,9 @@ Add to `package.json`:
   }
 }
 ```
+
 Run tests:
+
 ```bash
 npm test
 npm run test:watch
@@ -213,16 +231,19 @@ npm run test:watch
 ### Coverage & Quality Gates
 
 Generate coverage locally:
+
 ```bash
 npm run test:coverage
 ```
 
 #### Coveralls Integration (GitHub Badge)
+
 1. Create a **Coveralls** repo and get the `COVERALLS_REPO_TOKEN`.
 2. Add it as a secret in your GitHub repo: **Settings → Secrets and variables → Actions**.
 3. Add a CI job to upload coverage.
 
 **`.github/workflows/coverage.yml`**
+
 ```yaml
 name: coverage
 on:
@@ -262,12 +283,12 @@ env:
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
   SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
   NEXT_PUBLIC_GOOGLE_PLACES_API_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY }}
-
 ```
 
 ### Coveralls Integration: ESLint
 
 **`.github/workflows/coverage.yml`**
+
 ```yaml
 name: lint
 on:
@@ -300,7 +321,6 @@ env:
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
   SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
   NEXT_PUBLIC_GOOGLE_PLACES_API_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY }}
-
 ```
 
 ## Supabase Integration
@@ -308,12 +328,15 @@ env:
 This project uses **Supabase** (hosted at supabase.com) for cloud database support.
 
 ### Install
+
 ```bash
 npm i @supabase/supabase-js
 ```
 
 ### Environment Variables
+
 Create **`.env.local`** (make sure you never commit secrets):
+
 ```bash
 # Public (safe to expose to the browser, still keep in env files)
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
@@ -326,7 +349,9 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 > The `SERVICE_ROLE_KEY` bypasses RLS and must only be used server-side in API routes or server actions.
 
 ### Client helper
+
 **`src/lib/supabaseClient.ts`**
+
 ```ts
 import { createClient } from '@supabase/supabase-js';
 
@@ -341,10 +366,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 We fetch Google Places data on the server (Next.js API route) so clients never see your key directly
 
 ### Enable API & key
-1. In Google Cloud Console, enable **Places API** (and **Maps Geocoding API** if you need geocodes).  
+
+1. In Google Cloud Console, enable **Places API** (and **Maps Geocoding API** if you need geocodes).
 2. Create an API key and restrict it to the **Places API** (API restriction). For server-side (Vercel), you usually cannot IP-restrict—use **API restrictions** + separate keys per environment.
 
 **`.env.local`**
+
 ```bash
 GOOGLE_MAPS_API_KEY=your-places-api-key
 ```
@@ -354,4 +381,3 @@ GOOGLE_MAPS_API_KEY=your-places-api-key
 
 ![Next JS](https://img.shields.io/badge/Next-black?style=for-the-badge&logo=next.js&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
- 

@@ -1,3 +1,4 @@
+// ./src/app/host/results/page.tsx
 import { Suspense } from 'react';
 import React from 'react';
 import ResultsPageClient from './ResultsPageClient';
@@ -18,7 +19,7 @@ export const dynamic = 'force-dynamic'; // Ensures dynamic rendering (no static 
  */
 export default function ResultsPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="p-6 text-gray-600">Loading results…</div>}>
       <ResultsPageClient />
     </Suspense>
   );
