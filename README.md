@@ -1,10 +1,10 @@
-# csc-510-proj-2
+# Food Finder
 
 Project 2 repository for CSC 510 - Fall 2025
 
 [WATCH THE DEMO VIDEO!](./FoodFinderDemo.mp4)
 
-## Group Members
+## Group Members (G10)
 
 - Rithik Kulkarni (rrkulka3)
 - Shiva Gadireddy (sgadire)
@@ -323,12 +323,68 @@ env:
   SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
   NEXT_PUBLIC_GOOGLE_PLACES_API_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY }}
 ```
+## Supabase Database & Sample Data
 
-## Supabase Integration
+This project uses **Supabase** as its backend database.
 
-This project uses **Supabase** (hosted at supabase.com) for cloud database support.
+### Database Schema
 
-### Install
+The database contains four main tables:
+
+| Table         | Description                                                                 |
+|---------------|-----------------------------------------------------------------------------|
+| `sessions`    | Represents a voting session (`solo` or `group`).                           |
+| `users`       | Users participating in a session, linked via `session_id`.                 |
+| `restaurants` | Restaurants available for voting, linked via `session_id`.                 |
+| `votes`       | Records user votes for restaurants, linked to `users`, `restaurants`, `sessions`. |
+
+**Schema Notes:**
+
+- Session codes are exactly 4 uppercase letters (e.g., `GRP1`, `SOL1`).  
+- Primary keys are sequential integers.  
+- Foreign keys enforce relationships:
+  - `users.session_id` → `sessions.id`  
+  - `restaurants.session_id` → `sessions.id`  
+  - `votes.session_id` → `sessions.id`  
+  - `votes.user_id` → `users.id`  
+  - `votes.restaurant_id` → `restaurants.id`  
+- Validation constraints:
+  - Positive radius and expiry hours  
+  - Valid mode (`solo` or `group`)  
+  - Price range 0–3 (if provided)  
+
+---
+
+### Sample Data
+
+A separate file `sample_data.sql` contains fully connected sample data:
+
+- Two sessions:
+  - `GRP1` → group session (multiple users and votes)
+  - `SOL1` → solo session (single user and vote)
+- Users:
+  - Alice and Bob in the group session  
+  - Charlie in the solo session
+- Restaurants:
+  - Original names preserved  
+  - Correctly assigned to sessions
+- Votes:
+  - Linked to users and restaurants  
+  - Includes vote timestamps
+
+**Usage:**
+
+1. Run the **create_tables.sql SQL script** first.  
+2. Load **sample data** using `sample_data.sql`.  
+3. Verify that sessions, users, restaurants, and votes are correctly linked.  
+
+> **Purpose:** The sample data demonstrates relationships and provides a realistic dataset for testing and onboarding.
+
+---
+
+### Supabase Integration
+
+Install Supabase client:
 
 ```bash
 npm i @supabase/supabase-js
