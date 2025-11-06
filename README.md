@@ -1,9 +1,8 @@
-<span style="display: flex; align-items: center; gap: 10px;">
+<span style="display: inline-flex; align-items: center; gap: 10px; font-size: 2.5em; font-weight: bold; line-height: 1;">
   <img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70">
-  <span style="font-size: 2.5em; font-weight: bold; line-height: 1;">
-    Food Finder
-  </span>
+  Food Finder
 </span>
+
 
 *Decisions are hard. Eating together shouldn't be.*
 
