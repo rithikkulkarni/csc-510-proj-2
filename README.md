@@ -1,8 +1,8 @@
-<!-- Logo with large title and slogan underneath -->
+<!-- Logo and Title with Slogan -->
 <div style="text-align: center; margin-bottom: 20px;">
-  <div style="display: inline-flex; align-items: center;">
-    <img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70" style="margin-right: 10px;">
-    <span style="font-size: 2.5em; font-weight: bold;">Food Finder</span>
+  <div style="display: inline-flex; align-items: baseline;">
+    <img src="./public/logo.png" alt="Food Finder Logo" width="80" height="80" style="margin-right: 12px;">
+    <span style="font-size: 3em; font-weight: bold; line-height: 1;">Food Finder</span>
   </div>
   <div style="font-size: 1em; color: gray; margin-top: 5px;">
     <em>Decisions are hard. Eating together shouldn't be.</em>
