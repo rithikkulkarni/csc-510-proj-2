@@ -1,3 +1,40 @@
+/**
+ * JoinForm Component
+ *
+ * Allows a user to join a session by entering a session code and their name.
+ * Handles both active and expired sessions.
+ *
+ * Props:
+ * - inputClassName?: string — optional Tailwind classes to override default input styling
+ * - buttonClassName?: string — optional Tailwind classes to override default button styling
+ *
+ * State:
+ * - code: string — session code input by the user
+ * - name: string — user's name input
+ * - message: string | null — feedback/error messages displayed below inputs
+ * - loading: boolean — tracks whether an API request is in progress
+ * - sessionExpired: boolean — indicates if the session is expired
+ * - lastRestaurantId: number | null — stores the winning restaurant ID for expired sessions
+ *
+ * Behavior:
+ * - Sanitizes session code input (letters only, uppercase, max 4 chars)
+ * - Validates required fields before submitting
+ * - Queries Supabase to:
+ *     - Verify session existence
+ *     - Check session expiration
+ *     - Fetch restaurants for active sessions
+ *     - Create a new user if one does not exist
+ *     - Compute the last-vote restaurant if session expired
+ * - Navigates to:
+ *     - `/host/swipe` for active sessions
+ *     - `/host/results` for expired sessions
+ *
+ * Notes:
+ * - Uses `useRouter` from Next.js App Router for navigation
+ * - Uses `data-testid` attributes for reliable testing
+ * - Handles API errors gracefully and shows user-friendly messages
+ */
+
 'use client';
 
 import React, { useState, FormEvent } from 'react';
@@ -40,13 +77,12 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
     setMessage(null);
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleJoin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!code) {
       setMessage('Please enter the session code.');
       return;
     }
-
     if (!sessionExpired && !name) {
       setMessage('Please enter your name.');
       return;
@@ -67,16 +103,13 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
         return;
       }
 
-      // Check if session has expired
       if (session.ends_at) {
         const now = new Date();
         const endsAt = new Date(session.ends_at + 'Z');
-        if (now > endsAt) {
+        if (now >= endsAt) {
           setMessage('This session has expired.');
           setSessionExpired(true);
 
-          // --- Fetch last man standing restaurant ID ---
-          // 1. Get all votes for this session
           const { data: votesData } = await supabase
             .from('votes')
             .select('restaurant_id, user_id, created_at')
@@ -84,18 +117,16 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
             .order('created_at', { ascending: false });
 
           if (votesData && votesData.length > 0) {
-            const lastVoteMap: Record<number, number> = {}; // user_id -> restaurant_id
+            const lastVoteMap: Record<number, number> = {};
             votesData.forEach((v) => {
-              if (!lastVoteMap[v.user_id]) lastVoteMap[v.user_id] = v.restaurant_id; // newest vote per user
+              if (!lastVoteMap[v.user_id]) lastVoteMap[v.user_id] = v.restaurant_id;
             });
 
-            // Count number of users per last restaurant
             const countMap: Record<number, number> = {};
             Object.values(lastVoteMap).forEach((rid) => {
               countMap[rid] = (countMap[rid] || 0) + 1;
             });
 
-            // Pick the restaurant with the most "last votes"
             const sorted = Object.entries(countMap)
               .sort(([, a], [, b]) => b - a)
               .map(([rid]) => Number(rid));
@@ -108,7 +139,6 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
         }
       }
 
-      // Session is active
       const { data: restaurants, error: restError } = await supabase
         .from('restaurants')
         .select('*')
@@ -139,7 +169,6 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
           setLoading(false);
           return;
         }
-
         user = newUser;
       }
 
@@ -159,12 +188,12 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
 
   return (
     <form
-      onSubmit={handleSubmit}
-      className="flex flex-col w-full gap-4 bg-yellow-50 p-6 rounded-2xl transition-all duration-150"
+      onSubmit={handleJoin}
+      className="flex flex-col w-full gap-4 bg-white p-6 rounded-2xl transition-all duration-150"
     >
-      {/* Name input is above session code, but removed if expired */}
       {!sessionExpired && (
         <input
+          data-testid="join-name-input"
           name="name"
           type="text"
           placeholder="Enter Your Name"
@@ -175,7 +204,7 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
       )}
 
       <input
-        data-testid="join-input"
+        data-testid="join-code-input"
         name="code"
         type="text"
         placeholder="Enter Session Code"
@@ -185,21 +214,26 @@ export default function JoinForm({ inputClassName, buttonClassName }: JoinFormPr
         className={inputClasses}
       />
 
-      {!sessionExpired ? (
+      {/* Join Button */}
+      {!sessionExpired && (
         <button
           data-testid="join-button"
           type="submit"
           disabled={loading}
-          className={buttonClasses}
+          className={`w-full mt-2 rounded-2xl bg-green-700 text-white font-bold text-lg py-4 shadow-md hover:shadow-lg hover:bg-green-800 active:scale-95 transition-transform duration-150 ${buttonClassName ?? ''}`}
         >
           {loading ? 'Joining...' : 'Join Session'}
         </button>
-      ) : (
+      )}
+
+      {/* View Results Button */}
+      {sessionExpired && (
         <button
-          data-testid="join-button"
+          data-testid="view-results-button"
           type="button"
           onClick={handleViewResults}
-          className={`${buttonClasses} bg-gray-500 hover:bg-gray-600`}
+          className={`w-full mt-2 rounded-2xl bg-yellow-400 text-green-900 font-bold text-lg py-4 shadow-md border border-yellow-500 hover:bg-yellow-300 active:scale-95 transition-transform duration-150 flex items-center justify-center gap-2 ${buttonClassName ?? ''}`}
+          disabled={loading}
         >
           View Results
         </button>

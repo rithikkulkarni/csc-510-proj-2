@@ -5,6 +5,24 @@ import '@testing-library/jest-dom';
 import { vi, beforeEach, describe, test, expect } from 'vitest';
 import Home from '../page';
 
+/**
+ * Integration/UI Test — Home Page
+ *
+ * Verifies:
+ * - Landing page correctly displays “HOST” and “JOIN” UI sections
+ * - JoinForm input + validation flow triggers correct messages and routing
+ *
+ * Includes:
+ * ✅ App Router navigation mock (`next/navigation`)
+ * ✅ Supabase client mock to simulate different join scenarios
+ *
+ * Scenarios Tested:
+ * 1) Invalid session code → shows error, does not navigate
+ * 2) Valid active session → routes to swipe page with correct query params
+ *
+ * @group integration
+ */
+
 // ---- Mock next/navigation (App Router hooks) ----
 const pushMock = vi.fn();
 vi.mock('next/navigation', () => ({
@@ -18,7 +36,7 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-// ---- Minimal Supabase mock that JoinForm uses ----
+// ---- Minimal Supabase mock used by JoinForm ----
 type Filters = Record<string, any>;
 type Row = Record<string, any>;
 type SupaResult = { data: any; error: any };
@@ -88,7 +106,6 @@ vi.mock('../../components/../lib/supabaseClient', () => {
 
 beforeEach(() => {
   pushMock.mockReset();
-  // reset scenario defaults
   scenario.sessions = async () => ({ data: null, error: new Error('not found') });
   scenario.restaurants = async () => ({ data: [], error: null });
   scenario.usersSelect = async () => ({
@@ -100,35 +117,41 @@ beforeEach(() => {
 });
 
 describe('Home Page', () => {
+  /**
+   * UI structure test — verifies that major UI elements exist
+   */
   test('renders HOST and JOIN cards', () => {
     render(<Home />);
 
-    expect(screen.getByText('HOST')).toBeInTheDocument();
-    expect(screen.getByText('JOIN')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Host/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Join/i })).toBeInTheDocument();
+
     expect(screen.getByText('Create Session')).toBeInTheDocument();
 
-    expect(screen.getByTestId('join-input')).toBeInTheDocument();
     expect(screen.getByTestId('join-button')).toBeInTheDocument();
   });
 
+  /**
+   * Full JoinForm flow test with Supabase + navigation behaviors
+   */
   test('JOIN form works correctly', async () => {
     render(<Home />);
 
-    // Fill required name for active (non-expired) flow
+    // Enter name (required for active session)
     const nameInput = screen.getByPlaceholderText(/enter your name/i);
     fireEvent.change(nameInput, { target: { value: 'Tester' } });
 
-    const input = screen.getByTestId('join-input') as HTMLInputElement;
+    const input = screen.getByTestId('join-code-input') as HTMLInputElement;
     const button = screen.getByTestId('join-button');
 
-    // 1) Enter incorrect code -> "Invalid session code."
-    // scenario.sessions remains "not found"
+    // 1️⃣ Invalid session → error message, no redirect
     fireEvent.change(input, { target: { value: 'WXYZ' } });
     fireEvent.click(button);
+
     expect(await screen.findByTestId('join-message')).toHaveTextContent('Invalid session code.');
     expect(pushMock).not.toHaveBeenCalled();
 
-    // 2) Enter correct code -> active session -> navigate (no success banner)
+    // 2️⃣ Valid active session → navigate to /host/swipe
     scenario.sessions = async (f) => ({
       data: { id: 42, code: f.code, ends_at: null },
       error: null,
@@ -139,7 +162,7 @@ describe('Home Page', () => {
       error: null,
     });
 
-    fireEvent.change(input, { target: { value: 'abcd' } }); // becomes ABCD
+    fireEvent.change(input, { target: { value: 'abcd' } }); // auto-uppercased by component logic
     fireEvent.click(button);
 
     await waitFor(() => {
