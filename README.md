@@ -1,5 +1,6 @@
-# Food Finder
-<img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70"> 
+# Food Finder 
+<img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70">
+
 *Decisions are hard. Eating together shouldn't be.*
 
 ---
