@@ -1,7 +1,11 @@
-# Food Finder 
+<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+  <img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70">
+  <h1 style="margin: 0;">Food Finder</h1>
+</div>
+
 *Decisions are hard. Eating together shouldn't be.*
 
-<img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70">  [WATCH THE DEMO VIDEO!](./FoodFinderDemo.mp4)
+ [WATCH THE DEMO VIDEO!](./FoodFinderDemo.mp4)
 
 ## Group Members (G10)
 
