@@ -1,6 +1,6 @@
 <span style="display: flex; align-items: center; gap: 10px;">
   <img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70">
-  <strong style="font-size: 4em;">Food Finder</strong>
+   <h1 style="margin: 0;">Food Finder</h1>
 </span>
 
 *Decisions are hard. Eating together shouldn't be.*
