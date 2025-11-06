@@ -1,9 +1,4 @@
-<div style="display: flex; align-items: center; gap: 10px;">
-  <img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70">
-  <p style="font-size: 32px; font-weight: bold; margin: 0;">Food Finder</p>
-</div>
-
-
+<img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70"> **Food Finder**
 *Decisions are hard. Eating together shouldn't be.*
 
 ---
