@@ -1,11 +1,12 @@
 <!-- Title and Logo -->
-<h1>
-  <img src="./public/logo.png" alt="Food Finder Logo" width="40" height="40" style="vertical-align:middle;">
+<h1 style="display:flex; align-items:center; font-size:2em;">
+  <img src="./logo.png" alt="Food Finder Logo" width="60" height="60" style="margin-right:10px;">
   Food Finder
+  <span style="font-size:0.5em; color:gray; margin-left:10px;">
+    <em>Decisions are hard. Eating together shouldn't be.</em>
+  </span>
 </h1>
-<p style="font-size:14px; color:gray; margin-top:-10px;">
-  Decisions are hard. Eating together shouldn't be.
-</p>
+
 
 
 Project 2 repository for CSC 510 - Fall 2025
