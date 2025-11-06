@@ -1,8 +1,7 @@
-# Food Finder <img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70"> 
-
+# Food Finder 
 *Decisions are hard. Eating together shouldn't be.*
 
-[WATCH THE DEMO VIDEO!](./FoodFinderDemo.mp4)
+<img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70">  [WATCH THE DEMO VIDEO!](./FoodFinderDemo.mp4)
 
 ## Group Members (G10)
 
