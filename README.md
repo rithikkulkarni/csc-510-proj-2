@@ -1,5 +1,5 @@
 <h1>
-  <img src="./logo.png" alt="Food Finder Logo" width="50" height="50">
+  <img src="./public/logo.png" alt="Food Finder Logo" width="50" height="50">
   Food Finder
   <span style="font-size:18px; color:gray;">- Decisions are hard. Eating together shouldn't be </span>
 </h1>
