@@ -1,11 +1,14 @@
 <!-- Title and Logo -->
 <h1 style="display:flex; align-items:center; font-size:2em;">
-  <img src="./logo.png" alt="Food Finder Logo" width="60" height="60" style="margin-right:10px;">
-  Food Finder
-  <span style="font-size:0.5em; color:gray; margin-left:10px;">
-    <em>Decisions are hard. Eating together shouldn't be.</em>
-  </span>
+  <img src="./public/logo.png" alt="Food Finder Logo" width="60" height="60" style="margin-right:10px;">
+  <div style="display:flex; flex-direction:column;">
+    Food Finder
+    <span style="font-size:0.6em; color:gray;">
+      <em>Decisions are hard. Eating together shouldn't be.</em>
+    </span>
+  </div>
 </h1>
+
 
 
 
