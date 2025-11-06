@@ -1,8 +1,6 @@
-# <img src="./public/logo.png" alt="Food Finder Logo" width="50" height="50"> Food Finder
+# <img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70"> Food Finder
 
 *Decisions are hard. Eating together shouldn't be.*
-
-Project 2 repository for CSC 510 - Fall 2025
 
 [WATCH THE DEMO VIDEO!](./FoodFinderDemo.mp4)
 
@@ -13,7 +11,7 @@ Project 2 repository for CSC 510 - Fall 2025
 - Ananya Rao (arrao3)
 - Natasha Wolsborn (njwolsbo)
 
-How to get this running:
+Project 2 repository for CSC 510 - Fall 2025
 
 ## Developer Handbook
 
