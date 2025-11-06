@@ -23,7 +23,6 @@ How to get this running:
 
 ```bash
 git clone https://github.com/rithikkulkarni/csc-510-proj-2.git
-cd csc-510-proj-2/starter
 npm install
 npm run dev
 ```
