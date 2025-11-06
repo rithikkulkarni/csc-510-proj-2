@@ -1,10 +1,12 @@
-<span style="display: inline-flex; align-items: center; gap: 10px; font-size: 5em; font-weight: bold; line-height: 1;">
+<div style="display: flex; align-items: center; gap: 10px;">
   <img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70">
-  Food Finder
-</span>
+  <p style="font-size: 32px; font-weight: bold; margin: 0;">Food Finder</p>
+</div>
 
 
 *Decisions are hard. Eating together shouldn't be.*
+
+---
 
  [WATCH THE DEMO VIDEO!](./FoodFinderDemo.mp4)
 
