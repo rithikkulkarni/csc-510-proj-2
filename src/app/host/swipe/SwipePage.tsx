@@ -352,6 +352,7 @@ function RestaurantCard({ place, onChoose }: { place: Place; onChoose: () => voi
             target="_blank"
             rel="noreferrer"
             className="text-green-700 underline"
+            onClick={(e) => e.stopPropagation()} // <-- prevent card click
           >
             Google Maps
           </a>
