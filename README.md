@@ -1,4 +1,4 @@
-# ![Food Finder Logo](./logo.png) Food Finder
+# ![Food Finder Logo](./public/logo.png) Food Finder
 
 *Decisions are hard. Eating together shouldn't be.*
 
