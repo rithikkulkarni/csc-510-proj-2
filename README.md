@@ -1,6 +1,12 @@
-# ![Food Finder Logo](./public/logo.png) Food Finder
+<!-- Title and Logo -->
+<h1>
+  <img src="./public/logo.png" alt="Food Finder Logo" width="40" height="40" style="vertical-align:middle;">
+  Food Finder
+</h1>
+<p style="font-size:14px; color:gray; margin-top:-10px;">
+  Decisions are hard. Eating together shouldn't be.
+</p>
 
-*Decisions are hard. Eating together shouldn't be.*
 
 Project 2 repository for CSC 510 - Fall 2025
 
