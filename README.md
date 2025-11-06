@@ -1,4 +1,4 @@
-<span style="display: inline-flex; align-items: center; gap: 10px; font-size: 2.5em; font-weight: bold; line-height: 1;">
+<span style="display: inline-flex; align-items: center; gap: 10px; font-size: 5em; font-weight: bold; line-height: 1;">
   <img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70">
   Food Finder
 </span>
