@@ -521,9 +521,7 @@ export default function ResultsPageClient() {
           })
           .filter(Boolean) as Restaurant[];
 
-        setTopRestaurants(topRestaurants);
         const rankedTopRestaurants = topRestaurants.map((r, idx) => ({ ...r, rank: idx + 1 }));
-
         setTopRestaurants(rankedTopRestaurants);
 
         // “Last Man Standing”: newest vote per user, then tally by restaurant
@@ -718,22 +716,29 @@ export default function ResultsPageClient() {
   }) {
     return (
       <div
-        className={`p-4 rounded-2xl shadow-md bg-white flex flex-col gap-2 relative transition-transform duration-150 hover:-translate-y-1 hover:scale-[1.02] ${
+        className={`relative p-4 rounded-2xl shadow-md bg-white flex flex-col gap-2 transition-transform duration-150 hover:-translate-y-1 hover:scale-[1.02] ${
           uniformBorder ? 'border-2 border-gray-300' : rankBorder || ''
         }`}
       >
+        {/* Vote count - top right corner */}
         {r.votes !== undefined && (
-          <div className="absolute top-2 right-4 font-bold text-green-900">Votes: {r.votes}</div>
+          <div className="absolute top-2 right-3 bg-yellow-100 text-yellow-800 font-bold text-sm px-2 py-1 rounded-full shadow-sm">
+            {r.votes} Vote{r.votes === 1 ? '' : 's'}
+          </div>
         )}
-        <h3 className="text-lg font-semibold text-green-900">
+
+        <h3 className="text-lg font-semibold text-green-900 mt-6">
           {r.rank ? `#${r.rank} ` : ''}
           {r.name}
         </h3>
+
         {r.address && <p className="text-sm text-green-800">{r.address}</p>}
+
         <div className="flex gap-3 mt-1 text-green-900 text-sm">
           <span>Price: {r.price ? '$'.repeat(r.price) : 'N/A'}</span>
           <span>Rating: {r.rating ?? 'N/A'} ⭐</span>
         </div>
+
         {r.website && (
           <a
             href={r.website}
@@ -744,6 +749,7 @@ export default function ResultsPageClient() {
             Website
           </a>
         )}
+
         {r.maps_uri && (
           <a
             href={r.maps_uri}
@@ -754,6 +760,7 @@ export default function ResultsPageClient() {
             Google Maps
           </a>
         )}
+
         {r.users && (
           <p className="text-sm text-green-700 mt-1">
             <strong>Voted by:</strong> {r.users.join(', ')}
