@@ -1,17 +1,19 @@
-# csc-510-proj-2
+# Food Finder 
 
-Project 2 repository for CSC 510 - Fall 2025
+*Decisions are hard. Eating together shouldn't be.*
 
-[WATCH THE DEMO VIDEO!](./FoodFinderDemo.mp4)
+<img src="./public/logo.png" alt="Food Finder Logo" width="70" height="70">
 
-## Group Members
+ [WATCH THE DEMO VIDEO!](./FoodFinderDemo.mp4)
+
+## Group Members (G10)
 
 - Rithik Kulkarni (rrkulka3)
 - Shiva Gadireddy (sgadire)
 - Ananya Rao (arrao3)
 - Natasha Wolsborn (njwolsbo)
 
-How to get this running:
+Project 2 repository for CSC 510 - Fall 2025
 
 ## Developer Handbook
 
@@ -23,7 +25,6 @@ How to get this running:
 
 ```bash
 git clone https://github.com/rithikkulkarni/csc-510-proj-2.git
-cd csc-510-proj-2/starter
 npm install
 npm run dev
 ```
@@ -324,12 +325,68 @@ env:
   SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
   NEXT_PUBLIC_GOOGLE_PLACES_API_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY }}
 ```
+## Supabase Database & Sample Data
 
-## Supabase Integration
+This project uses **Supabase** as its backend database.
 
-This project uses **Supabase** (hosted at supabase.com) for cloud database support.
+### Database Schema
 
-### Install
+The database contains four main tables:
+
+| Table         | Description                                                                 |
+|---------------|-----------------------------------------------------------------------------|
+| `sessions`    | Represents a voting session (`solo` or `group`).                           |
+| `users`       | Users participating in a session, linked via `session_id`.                 |
+| `restaurants` | Restaurants available for voting, linked via `session_id`.                 |
+| `votes`       | Records user votes for restaurants, linked to `users`, `restaurants`, `sessions`. |
+
+**Schema Notes:**
+
+- Session codes are exactly 4 uppercase letters (e.g., `GRP1`, `SOL1`).  
+- Primary keys are sequential integers.  
+- Foreign keys enforce relationships:
+  - `users.session_id` → `sessions.id`  
+  - `restaurants.session_id` → `sessions.id`  
+  - `votes.session_id` → `sessions.id`  
+  - `votes.user_id` → `users.id`  
+  - `votes.restaurant_id` → `restaurants.id`  
+- Validation constraints:
+  - Positive radius and expiry hours  
+  - Valid mode (`solo` or `group`)  
+  - Price range 0–3 (if provided)  
+
+---
+
+### Sample Data
+
+A separate file `sample_data.sql` contains fully connected sample data:
+
+- Two sessions:
+  - `GRP1` → group session (multiple users and votes)
+  - `SOL1` → solo session (single user and vote)
+- Users:
+  - Alice and Bob in the group session  
+  - Charlie in the solo session
+- Restaurants:
+  - Original names preserved  
+  - Correctly assigned to sessions
+- Votes:
+  - Linked to users and restaurants  
+  - Includes vote timestamps
+
+**Usage:**
+
+1. Run the **create_tables.sql SQL script** first.  
+2. Load **sample data** using `sample_data.sql`.  
+3. Verify that sessions, users, restaurants, and votes are correctly linked.  
+
+> **Purpose:** The sample data demonstrates relationships and provides a realistic dataset for testing and onboarding.
+
+---
+
+### Supabase Integration
+
+Install Supabase client:
 
 ```bash
 npm i @supabase/supabase-js
@@ -380,7 +437,7 @@ GOOGLE_MAPS_API_KEY=your-places-api-key
 
 [![Coverage Status](https://coveralls.io/repos/github/rithikkulkarni/csc-510-proj-2/badge.svg?branch=main)](https://coveralls.io/github/rithikkulkarni/csc-510-proj-2?branch=main)
 [![Lint](https://github.com/rithikkulkarni/csc-510-proj-2/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/rithikkulkarni/csc-510-proj-2/actions/workflows/lint.yml)
-
+[![DOI](https://zenodo.org/badge/1073022543.svg)](https://zenodo.org/badge/latestdoi/1073022543)
 ![Next JS](https://img.shields.io/badge/Next-black?style=for-the-badge&logo=next.js&logoColor=white)
 ![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
 ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
