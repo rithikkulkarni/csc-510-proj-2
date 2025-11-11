@@ -1,3 +1,14 @@
+[![Coverage Status](https://coveralls.io/repos/github/rithikkulkarni/csc-510-proj-2/badge.svg?branch=main)](https://coveralls.io/github/rithikkulkarni/csc-510-proj-2?branch=main)
+[![Lint](https://github.com/rithikkulkarni/csc-510-proj-2/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/rithikkulkarni/csc-510-proj-2/actions/workflows/lint.yml)
+[![DOI](https://zenodo.org/badge/1073022543.svg)](https://zenodo.org/badge/latestdoi/1073022543)
+![Next JS](https://img.shields.io/badge/Next-black?style=for-the-badge&logo=next.js&logoColor=white)
+![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
+![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
+![ESLint](https://img.shields.io/badge/ESLint-4B3263?style=for-the-badge&logo=eslint&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+
 # Food Finder 
 
 *Decisions are hard. Eating together shouldn't be.*
@@ -434,14 +445,3 @@ We fetch Google Places data on the server (Next.js API route) so clients never s
 ```bash
 GOOGLE_MAPS_API_KEY=your-places-api-key
 ```
-
-[![Coverage Status](https://coveralls.io/repos/github/rithikkulkarni/csc-510-proj-2/badge.svg?branch=main)](https://coveralls.io/github/rithikkulkarni/csc-510-proj-2?branch=main)
-[![Lint](https://github.com/rithikkulkarni/csc-510-proj-2/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/rithikkulkarni/csc-510-proj-2/actions/workflows/lint.yml)
-[![DOI](https://zenodo.org/badge/1073022543.svg)](https://zenodo.org/badge/latestdoi/1073022543)
-![Next JS](https://img.shields.io/badge/Next-black?style=for-the-badge&logo=next.js&logoColor=white)
-![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
-![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
-![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
-![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
-![ESLint](https://img.shields.io/badge/ESLint-4B3263?style=for-the-badge&logo=eslint&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
