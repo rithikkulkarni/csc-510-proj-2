@@ -34,7 +34,7 @@ but nevertheless, here is a track record that everyone is contributing a lot)|ev
 |Evidence that the whole team is using the same tools (e.g. config files in the repo, updated by lots of different people)| |3|
 |Evidence that the whole team is using the same tools (e.g. tutor can ask anyone to share screen, they demonstrate the system running on their computer)| |3|
 |Evidence that the members of the team are working across multiple places in the code base| |3|
-|Short release cycles | (hard to see in short projects) project members are committing often enough so that everyone can get your work| |3|
+|Short release cycles | (hard to see in short projects) project members are committing often enough so that everyone can get your work|3|
 |The file .gitignore lists what files should not be saved to the repo. See [examples](https://github.com/github/gitignore)|in GH|3|
 |The file INSTALL.md lists how to install the code|in GH|3|
 |The file LICENSE.md lists rules of usage for this repo|in GH|3|
